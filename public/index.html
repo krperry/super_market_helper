@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Inventory Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Store Inventory Manager</h1>
+            <nav>
+                <button id="inventoryTab" class="nav-btn active">All Inventory</button>
+                <button id="shoppingTab" class="nav-btn">Shopping List</button>
+                <button id="addItemTab" class="nav-btn">Add Item</button>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Inventory View -->
+            <div id="inventoryView" class="view active">
+                <div class="controls">
+                    <label for="locationFilter">Filter by Location:</label>
+                    <select id="locationFilter">
+                        <option value="">All Locations</option>
+                    </select>
+                    <button id="refreshInventory" class="btn-primary">Refresh</button>
+                </div>
+                <div class="table-container">
+                    <table id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>Brand</th>
+                                <th>Item</th>
+                                <th>Location</th>
+                                <th>Current Count</th>
+                                <th>Target Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Shopping List View -->
+            <div id="shoppingView" class="view">
+                <div class="controls">
+                    <label for="shoppingLocationFilter">Filter by Location:</label>
+                    <select id="shoppingLocationFilter">
+                        <option value="">All Locations</option>
+                    </select>
+                    <button id="refreshShopping" class="btn-primary">Refresh</button>
+                </div>
+                <div class="table-container">
+                    <table id="shoppingTable">
+                        <thead>
+                            <tr>
+                                <th>Brand</th>
+                                <th>Item</th>
+                                <th>Location</th>
+                                <th>Current Count</th>
+                                <th>Target Amount</th>
+                                <th>Need to Buy</th>
+                                <th>Purchased</th>
+                                <th>✓</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Add Item View -->
+            <div id="addItemView" class="view">
+                <div class="form-container">
+                    <h2 id="formTitle">Add New Item</h2>
+                    <form id="itemForm">
+                        <input type="hidden" id="itemId">
+                        
+                        <div class="form-group">
+                            <label for="brand">Brand:</label>
+                            <input type="text" id="brand" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="item">Item:</label>
+                            <input type="text" id="item" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="location">Location:</label>
+                            <input type="text" id="location" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="currentCount">Current Count:</label>
+                            <input type="number" id="currentCount" min="0" value="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="targetAmount">Target Amount:</label>
+                            <input type="number" id="targetAmount" min="0" value="0">
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Save Item</button>
+                            <button type="button" id="cancelForm" class="btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>Edit Item</h2>
+            <form id="editItemForm">
+                <input type="hidden" id="editItemId">
+                
+                <div class="form-group">
+                    <label for="editBrand">Brand:</label>
+                    <input type="text" id="editBrand" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editItem">Item:</label>
+                    <input type="text" id="editItem" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editLocation">Location:</label>
+                    <input type="text" id="editLocation" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editCurrentCount">Current Count:</label>
+                    <input type="number" id="editCurrentCount" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editTargetAmount">Target Amount:</label>
+                    <input type="number" id="editTargetAmount" min="0" required>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                    <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
