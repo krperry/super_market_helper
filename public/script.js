@@ -2,14 +2,47 @@ class InventoryManager {
     constructor() {
         this.currentView = 'inventory';
         this.locations = [];
+        this.currentStoreId = null;
+        this.stores = [];
         this.init();
     }
 
     init() {
-        this.setupEventListeners();
-        this.loadLocations();
-        this.showView('inventory');
-        this.loadInventory();
+        this.loadStores().then(() => {
+            this.setupEventListeners();
+            this.loadLocations();
+            this.showView('inventory');
+            this.loadInventory();
+        });
+    }
+
+    async loadStores() {
+        try {
+            const response = await fetch('/api/stores');
+            this.stores = await response.json();
+            
+            if (this.stores.length > 0) {
+                this.currentStoreId = this.stores[0].id;
+                this.populateStoreSelector();
+            }
+        } catch (error) {
+            console.error('Error loading stores:', error);
+        }
+    }
+
+    populateStoreSelector() {
+        const storeSelect = document.getElementById('currentStore');
+        storeSelect.innerHTML = '';
+        
+        this.stores.forEach(store => {
+            const option = document.createElement('option');
+            option.value = store.id;
+            option.textContent = store.name;
+            if (store.id === this.currentStoreId) {
+                option.selected = true;
+            }
+            storeSelect.appendChild(option);
+        });
     }
 
     setupEventListeners() {
@@ -18,6 +51,13 @@ class InventoryManager {
         document.getElementById('shoppingTab').addEventListener('click', () => this.showView('shopping'));
         document.getElementById('addItemTab').addEventListener('click', () => this.showView('addItem'));
         document.getElementById('locationsTab').addEventListener('click', () => this.showView('locations'));
+        document.getElementById('storesTab').addEventListener('click', () => this.showView('stores'));
+
+        // Store selector
+        document.getElementById('currentStore').addEventListener('change', (e) => {
+            this.currentStoreId = parseInt(e.target.value);
+            this.onStoreChange();
+        });
 
         // Refresh buttons
         document.getElementById('refreshInventory').addEventListener('click', () => this.loadInventory());
@@ -41,6 +81,10 @@ class InventoryManager {
         // Edit Location Modal handling
         document.getElementById('editLocationForm').addEventListener('submit', (e) => this.handleEditLocationSubmit(e));
         
+        // Store form handling
+        document.getElementById('addStoreForm').addEventListener('submit', (e) => this.handleAddStore(e));
+        document.getElementById('editStoreForm').addEventListener('submit', (e) => this.handleEditStoreSubmit(e));
+        
         window.addEventListener('click', (e) => {
             const editModal = document.getElementById('editModal');
             if (e.target === editModal) {
@@ -50,7 +94,31 @@ class InventoryManager {
             if (e.target === editLocationModal) {
                 this.closeEditLocationModal();
             }
+            const editStoreModal = document.getElementById('editStoreModal');
+            if (e.target === editStoreModal) {
+                this.closeEditStoreModal();
+            }
         });
+    }
+
+    onStoreChange() {
+        this.loadLocations();
+        
+        // Reload current view data
+        switch(this.currentView) {
+            case 'inventory':
+                this.loadInventory();
+                break;
+            case 'shopping':
+                this.loadShoppingList();
+                break;
+            case 'locations':
+                this.loadLocationsView();
+                break;
+            case 'stores':
+                this.loadStoresView();
+                break;
+        }
     }
 
     showView(viewName) {
@@ -78,12 +146,15 @@ class InventoryManager {
             case 'locations':
                 this.loadLocationsView();
                 break;
+            case 'stores':
+                this.loadStoresView();
+                break;
         }
     }
 
     async loadLocations() {
         try {
-            const response = await fetch('/api/locations');
+            const response = await fetch(`/api/locations?store_id=${this.currentStoreId}`);
             this.locations = await response.json();
             
             const locationFilter = document.getElementById('locationFilter');
@@ -136,7 +207,8 @@ class InventoryManager {
     async loadInventory() {
         const locationFilter = document.getElementById('locationFilter').value;
         const searchTerm = document.getElementById('searchItems').value.toLowerCase().trim();
-        const url = locationFilter ? `/api/inventory/location/${encodeURIComponent(locationFilter)}` : '/api/inventory';
+        const baseUrl = locationFilter ? `/api/inventory/location/${encodeURIComponent(locationFilter)}` : '/api/inventory';
+        const url = `${baseUrl}?store_id=${this.currentStoreId}`;
         
         try {
             const response = await fetch(url);
@@ -160,7 +232,8 @@ class InventoryManager {
     async loadShoppingList() {
         const locationFilter = document.getElementById('shoppingLocationFilter').value;
         const searchTerm = document.getElementById('searchShopping').value.toLowerCase().trim();
-        const url = locationFilter ? `/api/shopping-list/location/${encodeURIComponent(locationFilter)}` : '/api/shopping-list';
+        const baseUrl = locationFilter ? `/api/shopping-list/location/${encodeURIComponent(locationFilter)}` : '/api/shopping-list';
+        const url = `${baseUrl}?store_id=${this.currentStoreId}`;
         
         try {
             const response = await fetch(url);
@@ -277,7 +350,8 @@ class InventoryManager {
             item: document.getElementById('item').value.trim(),
             location: document.getElementById('location').value.trim(),
             currentCount: parseInt(document.getElementById('currentCount').value) || 0,
-            targetAmount: parseInt(document.getElementById('targetAmount').value) || 0
+            targetAmount: parseInt(document.getElementById('targetAmount').value) || 0,
+            store_id: this.currentStoreId
         };
 
         try {
@@ -340,7 +414,7 @@ class InventoryManager {
 
     async editItem(id) {
         try {
-            const response = await fetch('/api/inventory');
+            const response = await fetch(`/api/inventory?store_id=${this.currentStoreId}`);
             const inventory = await response.json();
             const item = inventory.find(i => i.id === id);
             
@@ -498,7 +572,7 @@ class InventoryManager {
     // Location Management Functions
     async loadLocationsView() {
         try {
-            const response = await fetch('/api/inventory');
+            const response = await fetch(`/api/inventory?store_id=${this.currentStoreId}`);
             const inventory = await response.json();
             
             // Count items per location
@@ -560,7 +634,8 @@ class InventoryManager {
                     item: `Location: ${newLocationName}`,
                     location: newLocationName,
                     currentCount: 0,
-                    targetAmount: 0
+                    targetAmount: 0,
+                    store_id: this.currentStoreId
                 })
             });
             
@@ -650,7 +725,7 @@ class InventoryManager {
         
         try {
             // Get all items in this location
-            const response = await fetch('/api/inventory');
+            const response = await fetch(`/api/inventory?store_id=${this.currentStoreId}`);
             const inventory = await response.json();
             const itemsToDelete = inventory.filter(item => item.location === locationName);
             
@@ -672,6 +747,177 @@ class InventoryManager {
     closeEditLocationModal() {
         document.getElementById('editLocationModal').style.display = 'none';
     }
+
+    // Store Management Methods
+    async loadStoresView() {
+        const storesList = document.getElementById('storesList');
+        
+        if (!storesList) {
+            console.error('storesList element not found');
+            return;
+        }
+        
+        storesList.innerHTML = '';
+        
+        if (!this.stores || this.stores.length === 0) {
+            storesList.innerHTML = '<p class="empty-state">No stores available. This shouldn\'t happen!</p>';
+            return;
+        }
+        
+        this.stores.forEach(store => {
+            const storeDiv = document.createElement('div');
+            storeDiv.className = 'store-item';
+            if (store.id === this.currentStoreId) {
+                storeDiv.classList.add('current-store');
+            }
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'store-item-name';
+            nameSpan.textContent = store.name;
+            
+            if (store.id === this.currentStoreId) {
+                const badge = document.createElement('span');
+                badge.className = 'store-item-badge';
+                badge.textContent = 'Current';
+                nameSpan.appendChild(badge);
+            }
+            
+            const buttonGroup = document.createElement('div');
+            
+            const renameBtn = document.createElement('button');
+            renameBtn.textContent = 'Rename';
+            renameBtn.className = 'btn-edit btn-small';
+            renameBtn.onclick = () => this.editStore(store.id, store.name);
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.className = 'btn-delete btn-small';
+            deleteBtn.onclick = () => this.deleteStore(store.id, store.name);
+            
+            buttonGroup.appendChild(renameBtn);
+            buttonGroup.appendChild(deleteBtn);
+            
+            storeDiv.appendChild(nameSpan);
+            storeDiv.appendChild(buttonGroup);
+            storesList.appendChild(storeDiv);
+        });
+    }
+
+    async handleAddStore(e) {
+        e.preventDefault();
+        
+        const storeName = document.getElementById('newStoreName').value.trim();
+        const copyItems = document.getElementById('copyItems').checked;
+        
+        if (!storeName) {
+            this.showError('Store name is required');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/stores', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: storeName,
+                    copyFromStoreId: copyItems ? this.currentStoreId : null
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                document.getElementById('newStoreName').value = '';
+                document.getElementById('copyItems').checked = true;
+                
+                await this.loadStores();
+                this.loadStoresView();
+            } else {
+                const error = await response.json();
+                this.showError(error.error || 'Failed to add store');
+            }
+        } catch (error) {
+            console.error('Error adding store:', error);
+            this.showError('Failed to add store');
+        }
+    }
+
+    async deleteStore(storeId, storeName) {
+        if (!confirm(`Are you sure you want to delete store "${storeName}"? This will delete all inventory in this store.`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/stores/${storeId}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                await this.loadStores();
+                
+                // If we deleted the current store, switch to the first available store
+                if (storeId === this.currentStoreId && this.stores.length > 0) {
+                    this.currentStoreId = this.stores[0].id;
+                    this.populateStoreSelector();
+                    this.onStoreChange();
+                }
+                
+                this.loadStoresView();
+            } else {
+                const error = await response.json();
+                this.showError(error.error || 'Failed to delete store');
+            }
+        } catch (error) {
+            console.error('Error deleting store:', error);
+            this.showError('Failed to delete store');
+        }
+    }
+
+    editStore(storeId, currentName) {
+        document.getElementById('editStoreId').value = storeId;
+        document.getElementById('editStoreName').value = currentName;
+        document.getElementById('editStoreModal').style.display = 'block';
+    }
+
+    async handleEditStoreSubmit(e) {
+        e.preventDefault();
+        
+        const storeId = document.getElementById('editStoreId').value;
+        const newName = document.getElementById('editStoreName').value.trim();
+        
+        if (!newName) {
+            this.showError('Store name cannot be empty');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/stores/${storeId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: newName })
+            });
+            
+            if (response.ok) {
+                this.closeEditStoreModal();
+                await this.loadStores();
+                this.populateStoreSelector();
+                this.loadStoresView();
+            } else {
+                const error = await response.json();
+                this.showError(error.error || 'Failed to rename store');
+            }
+        } catch (error) {
+            console.error('Error renaming store:', error);
+            this.showError('Failed to rename store');
+        }
+    }
+
+    closeEditStoreModal() {
+        document.getElementById('editStoreModal').style.display = 'none';
+    }
 }
 
 // Initialize the application when the page loads
@@ -687,4 +933,8 @@ window.closeEditModal = () => {
 
 window.closeEditLocationModal = () => {
     inventoryManager.closeEditLocationModal();
+};
+
+window.closeEditStoreModal = () => {
+    inventoryManager.closeEditStoreModal();
 };

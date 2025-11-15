@@ -10,11 +10,16 @@
     <div class="container">
         <header>
             <h1>Store Inventory Manager</h1>
+            <div class="store-selector">
+                <label for="currentStore">Current Store:</label>
+                <select id="currentStore"></select>
+            </div>
             <nav>
                 <button id="inventoryTab" class="nav-btn active">All Inventory</button>
                 <button id="shoppingTab" class="nav-btn">Shopping List</button>
                 <button id="addItemTab" class="nav-btn">Add Item</button>
                 <button id="locationsTab" class="nav-btn">Manage Locations</button>
+                <button id="storesTab" class="nav-btn">Manage Stores</button>
             </nav>
         </header>
 
@@ -161,6 +166,37 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Manage Stores View -->
+            <div id="storesView" class="view">
+                <div class="form-container">
+                    <h2>Manage Stores</h2>
+                    
+                    <div class="form-section">
+                        <h3>Add New Store</h3>
+                        <form id="addStoreForm">
+                            <div class="form-group">
+                                <label for="newStoreName">Store Name:</label>
+                                <input type="text" id="newStoreName" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="copyItems" checked>
+                                    Copy all items from current store (with 0 quantities)
+                                </label>
+                            </div>
+                            
+                            <button type="submit" class="btn-primary">Add Store</button>
+                        </form>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Existing Stores</h3>
+                        <div id="storesList"></div>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -222,6 +258,27 @@
                 <div class="form-actions">
                     <button type="submit" class="btn-primary">Save Changes</button>
                     <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Store Name Modal -->
+    <div id="editStoreModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditStoreModal()">&times;</span>
+            <h2>Rename Store</h2>
+            <form id="editStoreForm">
+                <input type="hidden" id="editStoreId">
+                
+                <div class="form-group">
+                    <label for="editStoreName">Store Name:</label>
+                    <input type="text" id="editStoreName" required>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                    <button type="button" class="btn-secondary" onclick="closeEditStoreModal()">Cancel</button>
                 </div>
             </form>
         </div>

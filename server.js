@@ -32,35 +32,187 @@ const db = new sqlite3.Database(dbPath, (err) => {
 
 // Initialize database tables
 function initializeDatabase() {
-    const createTableQuery = `
+    // Create stores table
+    const createStoresTable = `
+        CREATE TABLE IF NOT EXISTS stores (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `;
+    
+    // Create inventory table with store_id
+    const createInventoryTable = `
         CREATE TABLE IF NOT EXISTS inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            store_id INTEGER NOT NULL,
             brand TEXT NOT NULL,
             item TEXT NOT NULL,
             location TEXT NOT NULL,
             currentCount INTEGER DEFAULT 0,
             targetAmount INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
         )
     `;
     
-    db.run(createTableQuery, (err) => {
+    db.run(createStoresTable, (err) => {
         if (err) {
-            console.error('Error creating table:', err);
+            console.error('Error creating stores table:', err);
         } else {
-            console.log('Database table initialized');
+            console.log('Stores table initialized');
+            
+            // Create default store if none exists
+            db.get('SELECT COUNT(*) as count FROM stores', [], (err, row) => {
+                if (!err && row.count === 0) {
+                    db.run('INSERT INTO stores (name) VALUES (?)', ['Default Store'], (err) => {
+                        if (err) {
+                            console.error('Error creating default store:', err);
+                        } else {
+                            console.log('Default store created');
+                            // Migrate existing inventory to default store
+                            db.run('UPDATE inventory SET store_id = 1 WHERE store_id IS NULL OR store_id = 0', (err) => {
+                                if (err) {
+                                    console.log('No existing inventory to migrate');
+                                } else {
+                                    console.log('Migrated existing inventory to default store');
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    });
+    
+    db.run(createInventoryTable, (err) => {
+        if (err) {
+            console.error('Error creating inventory table:', err);
+        } else {
+            console.log('Inventory table initialized');
         }
     });
 }
 
 // API Routes
 
-// Get all inventory items
-app.get('/api/inventory', (req, res) => {
-    const query = 'SELECT * FROM inventory ORDER BY location, brand, item';
+// Store Management Routes
+
+// Get all stores
+app.get('/api/stores', (req, res) => {
+    const query = 'SELECT * FROM stores ORDER BY name';
     
     db.all(query, [], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+        } else {
+            res.json(rows);
+        }
+    });
+});
+
+// Add new store
+app.post('/api/stores', (req, res) => {
+    const { name, copyFromStoreId } = req.body;
+    
+    if (!name) {
+        return res.status(400).json({ error: 'Store name is required' });
+    }
+    
+    const insertStoreQuery = 'INSERT INTO stores (name) VALUES (?)';
+    
+    db.run(insertStoreQuery, [name], function(err) {
+        if (err) {
+            if (err.message.includes('UNIQUE constraint failed')) {
+                res.status(400).json({ error: 'Store name already exists' });
+            } else {
+                res.status(500).json({ error: err.message });
+            }
+        } else {
+            const newStoreId = this.lastID;
+            
+            // If copyFromStoreId is provided, copy all items
+            if (copyFromStoreId) {
+                const copyQuery = `
+                    INSERT INTO inventory (store_id, brand, item, location, currentCount, targetAmount)
+                    SELECT ?, brand, item, location, 0, 0
+                    FROM inventory
+                    WHERE store_id = ?
+                `;
+                
+                db.run(copyQuery, [newStoreId, copyFromStoreId], (err) => {
+                    if (err) {
+                        res.status(500).json({ error: 'Store created but failed to copy items: ' + err.message });
+                    } else {
+                        res.json({ id: newStoreId, message: 'Store created and items copied successfully' });
+                    }
+                });
+            } else {
+                res.json({ id: newStoreId, message: 'Empty store created successfully' });
+            }
+        }
+    });
+});
+
+// Update store name
+app.put('/api/stores/:id', (req, res) => {
+    const id = req.params.id;
+    const { name } = req.body;
+    
+    if (!name) {
+        return res.status(400).json({ error: 'Store name is required' });
+    }
+    
+    const query = 'UPDATE stores SET name = ? WHERE id = ?';
+    
+    db.run(query, [name, id], function(err) {
+        if (err) {
+            if (err.message.includes('UNIQUE constraint failed')) {
+                res.status(400).json({ error: 'Store name already exists' });
+            } else {
+                res.status(500).json({ error: err.message });
+            }
+        } else {
+            res.json({ message: 'Store renamed successfully', changes: this.changes });
+        }
+    });
+});
+
+// Delete store
+app.delete('/api/stores/:id', (req, res) => {
+    const id = req.params.id;
+    
+    // Check if it's the last store
+    db.get('SELECT COUNT(*) as count FROM stores', [], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        
+        if (row.count <= 1) {
+            return res.status(400).json({ error: 'Cannot delete the last store' });
+        }
+        
+        const query = 'DELETE FROM stores WHERE id = ?';
+        
+        db.run(query, [id], function(err) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+            } else {
+                res.json({ message: 'Store deleted successfully', changes: this.changes });
+            }
+        });
+    });
+});
+
+// Inventory Management Routes (updated to include store_id)
+
+// Get all inventory items for a store
+app.get('/api/inventory', (req, res) => {
+    const storeId = req.query.store_id || 1;
+    const query = 'SELECT * FROM inventory WHERE store_id = ? ORDER BY location, brand, item';
+    
+    db.all(query, [storeId], (err, rows) => {
         if (err) {
             res.status(500).json({ error: err.message });
         } else {
@@ -72,9 +224,10 @@ app.get('/api/inventory', (req, res) => {
 // Get inventory by location
 app.get('/api/inventory/location/:location', (req, res) => {
     const location = req.params.location;
-    const query = 'SELECT * FROM inventory WHERE location = ? ORDER BY brand, item';
+    const storeId = req.query.store_id || 1;
+    const query = 'SELECT * FROM inventory WHERE location = ? AND store_id = ? ORDER BY brand, item';
     
-    db.all(query, [location], (err, rows) => {
+    db.all(query, [location, storeId], (err, rows) => {
         if (err) {
             res.status(500).json({ error: err.message });
         } else {
@@ -85,14 +238,15 @@ app.get('/api/inventory/location/:location', (req, res) => {
 
 // Get shopping list (items where currentCount < targetAmount)
 app.get('/api/shopping-list', (req, res) => {
+    const storeId = req.query.store_id || 1;
     const query = `
         SELECT *, (targetAmount - currentCount) as needed 
         FROM inventory 
-        WHERE currentCount < targetAmount 
+        WHERE currentCount < targetAmount AND store_id = ?
         ORDER BY location, brand, item
     `;
     
-    db.all(query, [], (err, rows) => {
+    db.all(query, [storeId], (err, rows) => {
         if (err) {
             res.status(500).json({ error: err.message });
         } else {
@@ -104,14 +258,15 @@ app.get('/api/shopping-list', (req, res) => {
 // Get shopping list by location
 app.get('/api/shopping-list/location/:location', (req, res) => {
     const location = req.params.location;
+    const storeId = req.query.store_id || 1;
     const query = `
         SELECT *, (targetAmount - currentCount) as needed 
         FROM inventory 
-        WHERE currentCount < targetAmount AND location = ?
+        WHERE currentCount < targetAmount AND location = ? AND store_id = ?
         ORDER BY brand, item
     `;
     
-    db.all(query, [location], (err, rows) => {
+    db.all(query, [location, storeId], (err, rows) => {
         if (err) {
             res.status(500).json({ error: err.message });
         } else {
@@ -122,18 +277,19 @@ app.get('/api/shopping-list/location/:location', (req, res) => {
 
 // Add new inventory item
 app.post('/api/inventory', (req, res) => {
-    const { brand, item, location, currentCount, targetAmount } = req.body;
+    const { brand, item, location, currentCount, targetAmount, store_id } = req.body;
+    const storeId = store_id || 1;
     
     if (!brand || !item || !location) {
         return res.status(400).json({ error: 'Brand, item, and location are required' });
     }
     
     const query = `
-        INSERT INTO inventory (brand, item, location, currentCount, targetAmount, updated_at)
-        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO inventory (store_id, brand, item, location, currentCount, targetAmount, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     `;
     
-    db.run(query, [brand, item, location, currentCount || 0, targetAmount || 0], function(err) {
+    db.run(query, [storeId, brand, item, location, currentCount || 0, targetAmount || 0], function(err) {
         if (err) {
             res.status(500).json({ error: err.message });
         } else {
@@ -198,9 +354,10 @@ app.delete('/api/inventory/:id', (req, res) => {
 
 // Get all unique locations
 app.get('/api/locations', (req, res) => {
-    const query = 'SELECT DISTINCT location FROM inventory ORDER BY location';
+    const storeId = req.query.store_id || 1;
+    const query = 'SELECT DISTINCT location FROM inventory WHERE store_id = ? ORDER BY location';
     
-    db.all(query, [], (err, rows) => {
+    db.all(query, [storeId], (err, rows) => {
         if (err) {
             res.status(500).json({ error: err.message });
         } else {
