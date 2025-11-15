@@ -133,6 +133,12 @@ class InventoryManager {
         document.getElementById(`${viewName}View`).classList.add('active');
         document.getElementById(`${viewName}Tab`).classList.add('active');
 
+        // Show/hide appropriate controls and table headers
+        document.getElementById('inventoryControls').style.display = viewName === 'inventory' ? 'flex' : 'none';
+        document.getElementById('inventoryTableHeader').style.display = viewName === 'inventory' ? 'block' : 'none';
+        document.getElementById('shoppingControls').style.display = viewName === 'shopping' ? 'flex' : 'none';
+        document.getElementById('shoppingTableHeader').style.display = viewName === 'shopping' ? 'block' : 'none';
+
         this.currentView = viewName;
 
         // Load data based on view
@@ -219,7 +225,8 @@ class InventoryManager {
             if (searchTerm) {
                 inventory = inventory.filter(item => 
                     item.brand.toLowerCase().includes(searchTerm) || 
-                    item.item.toLowerCase().includes(searchTerm)
+                    item.item.toLowerCase().includes(searchTerm) ||
+                    item.location.toLowerCase().includes(searchTerm)
                 );
             }
             
@@ -247,7 +254,8 @@ class InventoryManager {
             if (searchTerm) {
                 shoppingList = shoppingList.filter(item => 
                     item.brand.toLowerCase().includes(searchTerm) || 
-                    item.item.toLowerCase().includes(searchTerm)
+                    item.item.toLowerCase().includes(searchTerm) ||
+                    item.location.toLowerCase().includes(searchTerm)
                 );
             }
             
@@ -274,22 +282,14 @@ class InventoryManager {
             const row = document.createElement('tr');
             const status = this.getItemStatus(item);
             
-            // Create dropdown options for current count (0 to targetAmount)
-            let countOptions = '';
-            const maxCount = item.targetAmount > 0 ? item.targetAmount : 10;
-            for (let i = 0; i <= maxCount; i++) {
-                const selected = i === item.currentCount ? 'selected' : '';
-                countOptions += `<option value="${i}" ${selected}>${i}</option>`;
-            }
-            
             row.innerHTML = `
                 <td>${this.escapeHtml(item.brand)}</td>
                 <td>${this.escapeHtml(item.item)}</td>
                 <td>${this.escapeHtml(item.location)}</td>
                 <td>
-                    <select class="count-dropdown" onchange="inventoryManager.updateCount(${item.id}, this.value)">
-                        ${countOptions}
-                    </select>
+                    <input type="number" class="purchase-amount" value="${item.currentCount}" min="0" 
+                           onchange="inventoryManager.updateCount(${item.id}, this.value)" 
+                           style="width: 60px;">
                 </td>
                 <td>${item.targetAmount}</td>
                 <td><span class="status-${status.class}">${status.text}</span></td>
@@ -338,7 +338,9 @@ class InventoryManager {
     }
 
     getItemStatus(item) {
-        if (item.currentCount === 0) {
+        if (item.currentCount === 0 && item.targetAmount === 0) {
+            return { class: 'unlicensed', text: 'Unlicensed' };
+        } else if (item.currentCount === 0) {
             return { class: 'out', text: 'Out of Stock' };
         } else if (item.currentCount < item.targetAmount) {
             return { class: 'low', text: 'Low Stock' };
@@ -474,7 +476,7 @@ class InventoryManager {
     async updateCount(id, newCount) {
         try {
             // Get current item to preserve targetAmount
-            const response = await fetch('/api/inventory');
+            const response = await fetch(`/api/inventory?store_id=${this.currentStoreId}`);
             const inventory = await response.json();
             const item = inventory.find(i => i.id === id);
             
@@ -496,12 +498,12 @@ class InventoryManager {
             } else {
                 const error = await updateResponse.json();
                 this.showError(error.error || 'Failed to update count');
-                this.loadInventory(); // Reload to reset dropdown
+                this.loadInventory(); // Reload to reset input
             }
         } catch (error) {
             console.error('Error updating count:', error);
             this.showError('Failed to update count');
-            this.loadInventory(); // Reload to reset dropdown
+            this.loadInventory(); // Reload to reset input
         }
     }
 
@@ -513,7 +515,7 @@ class InventoryManager {
 
         try {
             // Get current item
-            const response = await fetch('/api/inventory');
+            const response = await fetch(`/api/inventory?store_id=${this.currentStoreId}`);
             const inventory = await response.json();
             const item = inventory.find(i => i.id === id);
             

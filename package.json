@@ -9,7 +9,7 @@
     "dev": "nodemon server.js",
     "import-csv": "node import-csv.js",
     "fix-targets": "node fix-targets.js",
-    "build": "pkg . --targets node18-win-x64 --output dist/StoreInventory.exe",
+    "build": "pkg . --targets node18-win-x64 --output dist/StoreInventory.exe && node copy-launcher.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": "server.js",

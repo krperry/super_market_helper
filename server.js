@@ -9,8 +9,8 @@ const { exec } = require('child_process');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Write PID file for stop script
-const pidFile = path.join(__dirname, '.server.pid');
+// Write PID file for stop script - use process.cwd() for PKG compatibility
+const pidFile = path.join(process.cwd(), '.server.pid');
 fs.writeFileSync(pidFile, process.pid.toString());
 console.log(`Server PID: ${process.pid}`);
 

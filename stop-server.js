@@ -2,7 +2,7 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-const pidFile = path.join(__dirname, '.server.pid');
+const pidFile = path.join(process.cwd(), '.server.pid');
 
 if (fs.existsSync(pidFile)) {
     const pid = fs.readFileSync(pidFile, 'utf8').trim();

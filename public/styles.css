@@ -85,6 +85,42 @@ nav {
     display: flex;
     justify-content: center;
     gap: 10px;
+    margin-bottom: 15px;
+}
+
+.view-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    padding: 12px 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    justify-content: center;
+}
+
+.view-controls label {
+    font-weight: 500;
+}
+
+.view-controls select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.fixed-table-header {
+    background-color: white;
+    overflow: hidden;
+    border-bottom: 3px solid #2c3e50;
+    margin-top: 10px;
+}
+
+.fixed-table-header table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .nav-btn {
@@ -121,9 +157,10 @@ nav {
 /* Sticky section for controls and headers */
 .sticky-section {
     position: sticky;
-    top: 130px;
+    top: 195px;
     z-index: 100;
     background-color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Controls */
@@ -265,50 +302,50 @@ th:last-child {
 }
 
 /* Specific column widths for inventory table */
-#inventoryView .table-header th:nth-child(1),
+#inventoryTableHeader th:nth-child(1),
 #inventoryView .table-container td:nth-child(1) { width: 15%; }
 
-#inventoryView .table-header th:nth-child(2),
+#inventoryTableHeader th:nth-child(2),
 #inventoryView .table-container td:nth-child(2) { width: 25%; }
 
-#inventoryView .table-header th:nth-child(3),
+#inventoryTableHeader th:nth-child(3),
 #inventoryView .table-container td:nth-child(3) { width: 15%; }
 
-#inventoryView .table-header th:nth-child(4),
+#inventoryTableHeader th:nth-child(4),
 #inventoryView .table-container td:nth-child(4) { width: 12%; }
 
-#inventoryView .table-header th:nth-child(5),
+#inventoryTableHeader th:nth-child(5),
 #inventoryView .table-container td:nth-child(5) { width: 12%; }
 
-#inventoryView .table-header th:nth-child(6),
+#inventoryTableHeader th:nth-child(6),
 #inventoryView .table-container td:nth-child(6) { width: 10%; }
 
-#inventoryView .table-header th:nth-child(7),
+#inventoryTableHeader th:nth-child(7),
 #inventoryView .table-container td:nth-child(7) { width: 11%; }
 
 /* Specific column widths for shopping table */
-#shoppingView .table-header th:nth-child(1),
+#shoppingTableHeader th:nth-child(1),
 #shoppingView .table-container td:nth-child(1) { width: 15%; }
 
-#shoppingView .table-header th:nth-child(2),
+#shoppingTableHeader th:nth-child(2),
 #shoppingView .table-container td:nth-child(2) { width: 20%; }
 
-#shoppingView .table-header th:nth-child(3),
+#shoppingTableHeader th:nth-child(3),
 #shoppingView .table-container td:nth-child(3) { width: 13%; }
 
-#shoppingView .table-header th:nth-child(4),
+#shoppingTableHeader th:nth-child(4),
 #shoppingView .table-container td:nth-child(4) { width: 10%; }
 
-#shoppingView .table-header th:nth-child(5),
+#shoppingTableHeader th:nth-child(5),
 #shoppingView .table-container td:nth-child(5) { width: 10%; }
 
-#shoppingView .table-header th:nth-child(6),
+#shoppingTableHeader th:nth-child(6),
 #shoppingView .table-container td:nth-child(6) { width: 10%; }
 
-#shoppingView .table-header th:nth-child(7),
+#shoppingTableHeader th:nth-child(7),
 #shoppingView .table-container td:nth-child(7) { width: 12%; }
 
-#shoppingView .table-header th:nth-child(8),
+#shoppingTableHeader th:nth-child(8),
 #shoppingView .table-container td:nth-child(8) { width: 10%; }
 
 tr:hover {
@@ -362,6 +399,11 @@ tr:hover {
 
 .status-over {
     color: #3498db;
+    font-weight: bold;
+}
+
+.status-unlicensed {
+    color: #95a5a6;
     font-weight: bold;
 }
 

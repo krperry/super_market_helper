@@ -21,38 +21,62 @@
                 <button id="locationsTab" class="nav-btn">Manage Locations</button>
                 <button id="storesTab" class="nav-btn">Manage Stores</button>
             </nav>
+            <div id="inventoryControls" class="view-controls">
+                <label for="searchItems">Search:</label>
+                <input type="text" id="searchItems" placeholder="Search brand or item..." style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; min-width: 200px;">
+                
+                <label for="locationFilter">Filter by Location:</label>
+                <select id="locationFilter">
+                    <option value="">All Locations</option>
+                </select>
+                <button id="refreshInventory" class="btn-primary">Refresh</button>
+            </div>
+            <div id="inventoryTableHeader" class="fixed-table-header">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Brand</th>
+                            <th>Item</th>
+                            <th>Location</th>
+                            <th>Current Count</th>
+                            <th>Target Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div id="shoppingControls" class="view-controls" style="display: none;">
+                <label for="searchShopping">Search:</label>
+                <input type="text" id="searchShopping" placeholder="Search brand or item..." style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; min-width: 200px;">
+                
+                <label for="shoppingLocationFilter">Filter by Location:</label>
+                <select id="shoppingLocationFilter">
+                    <option value="">All Locations</option>
+                </select>
+                <button id="refreshShopping" class="btn-primary">Refresh</button>
+            </div>
+            <div id="shoppingTableHeader" class="fixed-table-header" style="display: none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Brand</th>
+                            <th>Item</th>
+                            <th>Location</th>
+                            <th>Current Count</th>
+                            <th>Target Amount</th>
+                            <th>Need to Buy</th>
+                            <th>Purchased</th>
+                            <th>✓</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
         </header>
 
         <main>
             <!-- Inventory View -->
             <div id="inventoryView" class="view active">
-                <div class="sticky-section">
-                    <div class="controls">
-                        <label for="searchItems">Search:</label>
-                        <input type="text" id="searchItems" placeholder="Search brand or item..." style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; min-width: 200px;">
-                        
-                        <label for="locationFilter">Filter by Location:</label>
-                        <select id="locationFilter">
-                            <option value="">All Locations</option>
-                        </select>
-                        <button id="refreshInventory" class="btn-primary">Refresh</button>
-                    </div>
-                    <div class="table-header">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Brand</th>
-                                    <th>Item</th>
-                                    <th>Location</th>
-                                    <th>Current Count</th>
-                                    <th>Target Amount</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                        </table>
-                    </div>
-                </div>
                 <div class="table-container">
                     <table id="inventoryTable">
                         <tbody></tbody>
@@ -62,34 +86,6 @@
 
             <!-- Shopping List View -->
             <div id="shoppingView" class="view">
-                <div class="sticky-section">
-                    <div class="controls">
-                        <label for="searchShopping">Search:</label>
-                        <input type="text" id="searchShopping" placeholder="Search brand or item..." style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; min-width: 200px;">
-                        
-                        <label for="shoppingLocationFilter">Filter by Location:</label>
-                        <select id="shoppingLocationFilter">
-                            <option value="">All Locations</option>
-                        </select>
-                        <button id="refreshShopping" class="btn-primary">Refresh</button>
-                    </div>
-                    <div class="table-header">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Brand</th>
-                                    <th>Item</th>
-                                    <th>Location</th>
-                                    <th>Current Count</th>
-                                    <th>Target Amount</th>
-                                    <th>Need to Buy</th>
-                                    <th>Purchased</th>
-                                    <th>✓</th>
-                                </tr>
-                            </thead>
-                        </table>
-                    </div>
-                </div>
                 <div class="table-container">
                     <table id="shoppingTable">
                         <tbody></tbody>

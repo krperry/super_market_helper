@@ -1,0 +1,11 @@
+
+> store-inventory-manager@1.0.0 build
+> pkg . --targets node18-win-x64 --output dist/StoreInventory.exe && node copy-launcher.js
+
+> pkg@5.8.1
+> Warning Cannot stat, ENOENT
+  C:\repos\shopping\.server.pid
+  The file was required from 'C:\repos\shopping\server.js'
+Copied Stop Store Inventory.vbs to dist/
+Copied Store Inventory Manager.vbs to dist/
+Launcher files copied successfully!
