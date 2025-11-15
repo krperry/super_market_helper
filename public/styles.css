@@ -233,21 +233,83 @@ th, td {
 .table-header {
     background-color: white;
     overflow: hidden;
+    border-bottom: 3px solid #2c3e50;
 }
 
 .table-header table {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 0;
+    table-layout: fixed;
 }
 
 th {
     background-color: #34495e;
     color: white;
-    font-weight: 600;
-    padding: 12px;
+    font-weight: 700;
+    padding: 14px 12px;
     text-align: left;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-right: 1px solid #4a5f7f;
 }
+
+th:last-child {
+    border-right: none;
+}
+
+/* Match body table layout */
+.table-container table {
+    table-layout: fixed;
+}
+
+/* Specific column widths for inventory table */
+#inventoryView .table-header th:nth-child(1),
+#inventoryView .table-container td:nth-child(1) { width: 15%; }
+
+#inventoryView .table-header th:nth-child(2),
+#inventoryView .table-container td:nth-child(2) { width: 25%; }
+
+#inventoryView .table-header th:nth-child(3),
+#inventoryView .table-container td:nth-child(3) { width: 15%; }
+
+#inventoryView .table-header th:nth-child(4),
+#inventoryView .table-container td:nth-child(4) { width: 12%; }
+
+#inventoryView .table-header th:nth-child(5),
+#inventoryView .table-container td:nth-child(5) { width: 12%; }
+
+#inventoryView .table-header th:nth-child(6),
+#inventoryView .table-container td:nth-child(6) { width: 10%; }
+
+#inventoryView .table-header th:nth-child(7),
+#inventoryView .table-container td:nth-child(7) { width: 11%; }
+
+/* Specific column widths for shopping table */
+#shoppingView .table-header th:nth-child(1),
+#shoppingView .table-container td:nth-child(1) { width: 15%; }
+
+#shoppingView .table-header th:nth-child(2),
+#shoppingView .table-container td:nth-child(2) { width: 20%; }
+
+#shoppingView .table-header th:nth-child(3),
+#shoppingView .table-container td:nth-child(3) { width: 13%; }
+
+#shoppingView .table-header th:nth-child(4),
+#shoppingView .table-container td:nth-child(4) { width: 10%; }
+
+#shoppingView .table-header th:nth-child(5),
+#shoppingView .table-container td:nth-child(5) { width: 10%; }
+
+#shoppingView .table-header th:nth-child(6),
+#shoppingView .table-container td:nth-child(6) { width: 10%; }
+
+#shoppingView .table-header th:nth-child(7),
+#shoppingView .table-container td:nth-child(7) { width: 12%; }
+
+#shoppingView .table-header th:nth-child(8),
+#shoppingView .table-container td:nth-child(8) { width: 10%; }
 
 tr:hover {
     background-color: #f8f9fa;

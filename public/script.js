@@ -222,6 +222,9 @@ class InventoryManager {
                 );
             }
             
+            // Sort alphabetically by item name
+            inventory.sort((a, b) => a.item.localeCompare(b.item));
+            
             this.renderInventoryTable(inventory);
         } catch (error) {
             console.error('Error loading inventory:', error);
@@ -246,6 +249,9 @@ class InventoryManager {
                     item.item.toLowerCase().includes(searchTerm)
                 );
             }
+            
+            // Sort alphabetically by item name
+            shoppingList.sort((a, b) => a.item.localeCompare(b.item));
             
             this.renderShoppingTable(shoppingList);
         } catch (error) {
