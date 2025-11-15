@@ -46,6 +46,9 @@ class InventoryManager {
     }
 
     setupEventListeners() {
+        // Shutdown button
+        
+        
         // Navigation
         document.getElementById('inventoryTab').addEventListener('click', () => this.showView('inventory'));
         document.getElementById('shoppingTab').addEventListener('click', () => this.showView('shopping'));
@@ -159,8 +162,8 @@ class InventoryManager {
             
             const locationFilter = document.getElementById('locationFilter');
             const shoppingLocationFilter = document.getElementById('shoppingLocationFilter');
-            const locationList = document.getElementById('locationList');
-            const editLocationList = document.getElementById('editLocationList');
+            const location = document.getElementById('location');
+            const editLocation = document.getElementById('editLocation');
             
             // Clear existing options (except "All Locations")
             if (locationFilter) {
@@ -169,34 +172,32 @@ class InventoryManager {
             if (shoppingLocationFilter) {
                 shoppingLocationFilter.innerHTML = '<option value="">All Locations</option>';
             }
-            if (locationList) {
-                locationList.innerHTML = '';
+            if (location) {
+                location.innerHTML = '<option value="">Select Location</option>';
             }
-            if (editLocationList) {
-                editLocationList.innerHTML = '';
+            if (editLocation) {
+                editLocation.innerHTML = '<option value="">Select Location</option>';
             }
             
             // Add location options
-            this.locations.forEach(location => {
+            this.locations.forEach(loc => {
                 if (locationFilter) {
-                    const option1 = new Option(location, location);
+                    const option1 = new Option(loc, loc);
                     locationFilter.appendChild(option1);
                 }
                 if (shoppingLocationFilter) {
-                    const option2 = new Option(location, location);
+                    const option2 = new Option(loc, loc);
                     shoppingLocationFilter.appendChild(option2);
                 }
                 
-                // Add to datalists
-                if (locationList) {
-                    const dataOption1 = document.createElement('option');
-                    dataOption1.value = location;
-                    locationList.appendChild(dataOption1);
+                // Add to add/edit location selects
+                if (location) {
+                    const option1 = new Option(loc, loc);
+                    location.appendChild(option1);
                 }
-                if (editLocationList) {
-                    const dataOption2 = document.createElement('option');
-                    dataOption2.value = location;
-                    editLocationList.appendChild(dataOption2);
+                if (editLocation) {
+                    const option2 = new Option(loc, loc);
+                    editLocation.appendChild(option2);
                 }
             });
         } catch (error) {

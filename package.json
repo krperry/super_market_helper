@@ -5,21 +5,36 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "stop": "node stop-server.js",
     "dev": "nodemon server.js",
     "import-csv": "node import-csv.js",
     "fix-targets": "node fix-targets.js",
+    "build": "pkg . --targets node18-win-x64 --output dist/StoreInventory.exe",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["inventory", "management", "store", "retail"],
+  "bin": "server.js",
+  "pkg": {
+    "assets": [
+      "public/**/*"
+    ],
+    "outputPath": "dist"
+  },
+  "keywords": [
+    "inventory",
+    "management",
+    "store",
+    "retail"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "sqlite3": "^5.1.6",
+    "body-parser": "^1.20.2",
     "cors": "^2.8.5",
-    "body-parser": "^1.20.2"
+    "express": "^4.18.2",
+    "sqlite3": "^5.1.6"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "pkg": "^5.8.1"
   }
 }

@@ -4,9 +4,32 @@ const bodyParser = require('body-parser');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
+const { exec } = require('child_process');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Write PID file for stop script
+const pidFile = path.join(__dirname, '.server.pid');
+fs.writeFileSync(pidFile, process.pid.toString());
+console.log(`Server PID: ${process.pid}`);
+
+// Clean up PID file on exit
+process.on('exit', () => {
+    if (fs.existsSync(pidFile)) {
+        fs.unlinkSync(pidFile);
+    }
+});
+
+process.on('SIGINT', () => {
+    console.log('\nShutting down server...');
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    console.log('\nShutting down server...');
+    process.exit(0);
+});
 
 // Middleware
 app.use(cors());
@@ -14,10 +37,11 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Database setup - create directory if it doesn't exist
-const dbDir = path.join(__dirname, 'database');
+// Use process.cwd() for PKG compatibility (works outside the snapshot)
+const dbDir = path.join(process.cwd(), 'database');
 if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
-    console.log('Created database directory');
+    console.log('Created database directory at:', dbDir);
 }
 
 const dbPath = path.join(dbDir, 'inventory.db');
@@ -25,7 +49,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('Error opening database:', err);
     } else {
-        console.log('Connected to SQLite database');
+        console.log('Connected to SQLite database at:', dbPath);
         initializeDatabase();
     }
 });
@@ -374,6 +398,13 @@ app.get('/', (req, res) => {
 // Start server
 app.listen(PORT, () => {
     console.log(`Store Inventory Manager running on http://localhost:${PORT}`);
+    console.log('Opening browser...');
+    
+    // Auto-open browser
+    const url = `http://localhost:${PORT}`;
+    const start = process.platform === 'win32' ? 'start' : 
+                  process.platform === 'darwin' ? 'open' : 'xdg-open';
+    exec(`${start} ${url}`);
 });
 
 // Graceful shutdown
