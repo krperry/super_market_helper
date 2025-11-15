@@ -14,32 +14,42 @@
                 <button id="inventoryTab" class="nav-btn active">All Inventory</button>
                 <button id="shoppingTab" class="nav-btn">Shopping List</button>
                 <button id="addItemTab" class="nav-btn">Add Item</button>
+                <button id="locationsTab" class="nav-btn">Manage Locations</button>
             </nav>
         </header>
 
         <main>
             <!-- Inventory View -->
             <div id="inventoryView" class="view active">
-                <div class="controls">
-                    <label for="locationFilter">Filter by Location:</label>
-                    <select id="locationFilter">
-                        <option value="">All Locations</option>
-                    </select>
-                    <button id="refreshInventory" class="btn-primary">Refresh</button>
+                <div class="sticky-section">
+                    <div class="controls">
+                        <label for="searchItems">Search:</label>
+                        <input type="text" id="searchItems" placeholder="Search brand or item..." style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; min-width: 200px;">
+                        
+                        <label for="locationFilter">Filter by Location:</label>
+                        <select id="locationFilter">
+                            <option value="">All Locations</option>
+                        </select>
+                        <button id="refreshInventory" class="btn-primary">Refresh</button>
+                    </div>
+                    <div class="table-header">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Brand</th>
+                                    <th>Item</th>
+                                    <th>Location</th>
+                                    <th>Current Count</th>
+                                    <th>Target Amount</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table id="inventoryTable">
-                        <thead>
-                            <tr>
-                                <th>Brand</th>
-                                <th>Item</th>
-                                <th>Location</th>
-                                <th>Current Count</th>
-                                <th>Target Amount</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -47,27 +57,36 @@
 
             <!-- Shopping List View -->
             <div id="shoppingView" class="view">
-                <div class="controls">
-                    <label for="shoppingLocationFilter">Filter by Location:</label>
-                    <select id="shoppingLocationFilter">
-                        <option value="">All Locations</option>
-                    </select>
-                    <button id="refreshShopping" class="btn-primary">Refresh</button>
+                <div class="sticky-section">
+                    <div class="controls">
+                        <label for="searchShopping">Search:</label>
+                        <input type="text" id="searchShopping" placeholder="Search brand or item..." style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; min-width: 200px;">
+                        
+                        <label for="shoppingLocationFilter">Filter by Location:</label>
+                        <select id="shoppingLocationFilter">
+                            <option value="">All Locations</option>
+                        </select>
+                        <button id="refreshShopping" class="btn-primary">Refresh</button>
+                    </div>
+                    <div class="table-header">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Brand</th>
+                                    <th>Item</th>
+                                    <th>Location</th>
+                                    <th>Current Count</th>
+                                    <th>Target Amount</th>
+                                    <th>Need to Buy</th>
+                                    <th>Purchased</th>
+                                    <th>✓</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table id="shoppingTable">
-                        <thead>
-                            <tr>
-                                <th>Brand</th>
-                                <th>Item</th>
-                                <th>Location</th>
-                                <th>Current Count</th>
-                                <th>Target Amount</th>
-                                <th>Need to Buy</th>
-                                <th>Purchased</th>
-                                <th>✓</th>
-                            </tr>
-                        </thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -92,7 +111,8 @@
 
                         <div class="form-group">
                             <label for="location">Location:</label>
-                            <input type="text" id="location" required>
+                            <input type="text" id="location" list="locationList" autocomplete="off" required>
+                            <datalist id="locationList"></datalist>
                         </div>
 
                         <div class="form-group">
@@ -112,7 +132,57 @@
                     </form>
                 </div>
             </div>
+
+            <!-- Manage Locations View -->
+            <div id="locationsView" class="view">
+                <div class="form-container" style="max-width: 700px;">
+                    <h2>Manage Locations</h2>
+                    
+                    <div class="location-add-section">
+                        <h3>Add New Location</h3>
+                        <div style="display: flex; gap: 10px; margin-bottom: 30px;">
+                            <input type="text" id="newLocationName" placeholder="Enter location name" style="flex: 1; padding: 10px;">
+                            <button onclick="inventoryManager.addLocation()" class="btn-primary">Add Location</button>
+                        </div>
+                    </div>
+
+                    <div class="location-list-section">
+                        <h3>Existing Locations</h3>
+                        <table id="locationsTable" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Location Name</th>
+                                    <th>Items Count</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </main>
+    </div>
+
+    <!-- Edit Location Modal -->
+    <div id="editLocationModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditLocationModal()">&times;</span>
+            <h2>Edit Location Name</h2>
+            <form id="editLocationForm">
+                <input type="hidden" id="oldLocationName">
+                
+                <div class="form-group">
+                    <label for="newLocationNameEdit">New Location Name:</label>
+                    <input type="text" id="newLocationNameEdit" required>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                    <button type="button" class="btn-secondary" onclick="closeEditLocationModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Edit Modal -->
@@ -135,7 +205,8 @@
 
                 <div class="form-group">
                     <label for="editLocation">Location:</label>
-                    <input type="text" id="editLocation" required>
+                    <input type="text" id="editLocation" list="editLocationList" autocomplete="off" required>
+                    <datalist id="editLocationList"></datalist>
                 </div>
 
                 <div class="form-group">

@@ -25,7 +25,16 @@ body {
 header {
     border-bottom: 2px solid #ddd;
     margin-bottom: 30px;
-    padding-bottom: 20px;
+    padding: 15px 20px 20px 20px;
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+main {
+    padding-top: 10px;
 }
 
 header h1 {
@@ -71,13 +80,25 @@ nav {
     display: block;
 }
 
+/* Sticky section for controls and headers */
+.sticky-section {
+    position: sticky;
+    top: 130px;
+    z-index: 100;
+    background-color: white;
+}
+
 /* Controls */
 .controls {
-    margin-bottom: 20px;
+    margin-bottom: 0;
     display: flex;
     align-items: center;
     gap: 15px;
     flex-wrap: wrap;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .controls label {
@@ -155,6 +176,7 @@ nav {
     background-color: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 0;
 }
 
 table {
@@ -169,12 +191,24 @@ th, td {
     border-bottom: 1px solid #ddd;
 }
 
+/* Table header container */
+.table-header {
+    background-color: white;
+    overflow: hidden;
+}
+
+.table-header table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0;
+}
+
 th {
     background-color: #34495e;
     color: white;
     font-weight: 600;
-    position: sticky;
-    top: 0;
+    padding: 12px;
+    text-align: left;
 }
 
 tr:hover {
@@ -278,6 +312,12 @@ tr:hover {
     gap: 10px;
     justify-content: center;
     margin-top: 30px;
+    padding: 15px;
+    background-color: white;
+    position: sticky;
+    bottom: 0;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
 }
 
 /* Modal styles */
@@ -428,4 +468,26 @@ tr:hover {
 
 .hidden {
     display: none !important;
+}
+
+/* Location Management Styles */
+.location-add-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.location-add-section h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.location-list-section h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+#locationsTable {
+    margin-top: 10px;
 }

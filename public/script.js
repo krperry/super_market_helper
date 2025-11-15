@@ -17,6 +17,7 @@ class InventoryManager {
         document.getElementById('inventoryTab').addEventListener('click', () => this.showView('inventory'));
         document.getElementById('shoppingTab').addEventListener('click', () => this.showView('shopping'));
         document.getElementById('addItemTab').addEventListener('click', () => this.showView('addItem'));
+        document.getElementById('locationsTab').addEventListener('click', () => this.showView('locations'));
 
         // Refresh buttons
         document.getElementById('refreshInventory').addEventListener('click', () => this.loadInventory());
@@ -26,6 +27,10 @@ class InventoryManager {
         document.getElementById('locationFilter').addEventListener('change', () => this.loadInventory());
         document.getElementById('shoppingLocationFilter').addEventListener('change', () => this.loadShoppingList());
 
+        // Search filters
+        document.getElementById('searchItems').addEventListener('input', () => this.loadInventory());
+        document.getElementById('searchShopping').addEventListener('input', () => this.loadShoppingList());
+
         // Add Form handling
         document.getElementById('itemForm').addEventListener('submit', (e) => this.handleAddFormSubmit(e));
         document.getElementById('cancelForm').addEventListener('click', () => this.resetAddForm());
@@ -33,9 +38,17 @@ class InventoryManager {
         // Edit Modal handling
         document.getElementById('editItemForm').addEventListener('submit', (e) => this.handleEditFormSubmit(e));
         
+        // Edit Location Modal handling
+        document.getElementById('editLocationForm').addEventListener('submit', (e) => this.handleEditLocationSubmit(e));
+        
         window.addEventListener('click', (e) => {
-            if (e.target === document.getElementById('editModal')) {
+            const editModal = document.getElementById('editModal');
+            if (e.target === editModal) {
                 this.closeEditModal();
+            }
+            const editLocationModal = document.getElementById('editLocationModal');
+            if (e.target === editLocationModal) {
+                this.closeEditLocationModal();
             }
         });
     }
@@ -62,6 +75,9 @@ class InventoryManager {
             case 'addItem':
                 this.resetAddForm();
                 break;
+            case 'locations':
+                this.loadLocationsView();
+                break;
         }
     }
 
@@ -72,17 +88,45 @@ class InventoryManager {
             
             const locationFilter = document.getElementById('locationFilter');
             const shoppingLocationFilter = document.getElementById('shoppingLocationFilter');
+            const locationList = document.getElementById('locationList');
+            const editLocationList = document.getElementById('editLocationList');
             
             // Clear existing options (except "All Locations")
-            locationFilter.innerHTML = '<option value="">All Locations</option>';
-            shoppingLocationFilter.innerHTML = '<option value="">All Locations</option>';
+            if (locationFilter) {
+                locationFilter.innerHTML = '<option value="">All Locations</option>';
+            }
+            if (shoppingLocationFilter) {
+                shoppingLocationFilter.innerHTML = '<option value="">All Locations</option>';
+            }
+            if (locationList) {
+                locationList.innerHTML = '';
+            }
+            if (editLocationList) {
+                editLocationList.innerHTML = '';
+            }
             
             // Add location options
             this.locations.forEach(location => {
-                const option1 = new Option(location, location);
-                const option2 = new Option(location, location);
-                locationFilter.appendChild(option1);
-                shoppingLocationFilter.appendChild(option2);
+                if (locationFilter) {
+                    const option1 = new Option(location, location);
+                    locationFilter.appendChild(option1);
+                }
+                if (shoppingLocationFilter) {
+                    const option2 = new Option(location, location);
+                    shoppingLocationFilter.appendChild(option2);
+                }
+                
+                // Add to datalists
+                if (locationList) {
+                    const dataOption1 = document.createElement('option');
+                    dataOption1.value = location;
+                    locationList.appendChild(dataOption1);
+                }
+                if (editLocationList) {
+                    const dataOption2 = document.createElement('option');
+                    dataOption2.value = location;
+                    editLocationList.appendChild(dataOption2);
+                }
             });
         } catch (error) {
             console.error('Error loading locations:', error);
@@ -91,11 +135,21 @@ class InventoryManager {
 
     async loadInventory() {
         const locationFilter = document.getElementById('locationFilter').value;
+        const searchTerm = document.getElementById('searchItems').value.toLowerCase().trim();
         const url = locationFilter ? `/api/inventory/location/${encodeURIComponent(locationFilter)}` : '/api/inventory';
         
         try {
             const response = await fetch(url);
-            const inventory = await response.json();
+            let inventory = await response.json();
+            
+            // Apply search filter
+            if (searchTerm) {
+                inventory = inventory.filter(item => 
+                    item.brand.toLowerCase().includes(searchTerm) || 
+                    item.item.toLowerCase().includes(searchTerm)
+                );
+            }
+            
             this.renderInventoryTable(inventory);
         } catch (error) {
             console.error('Error loading inventory:', error);
@@ -105,11 +159,21 @@ class InventoryManager {
 
     async loadShoppingList() {
         const locationFilter = document.getElementById('shoppingLocationFilter').value;
+        const searchTerm = document.getElementById('searchShopping').value.toLowerCase().trim();
         const url = locationFilter ? `/api/shopping-list/location/${encodeURIComponent(locationFilter)}` : '/api/shopping-list';
         
         try {
             const response = await fetch(url);
-            const shoppingList = await response.json();
+            let shoppingList = await response.json();
+            
+            // Apply search filter
+            if (searchTerm) {
+                shoppingList = shoppingList.filter(item => 
+                    item.brand.toLowerCase().includes(searchTerm) || 
+                    item.item.toLowerCase().includes(searchTerm)
+                );
+            }
+            
             this.renderShoppingTable(shoppingList);
         } catch (error) {
             console.error('Error loading shopping list:', error);
@@ -226,7 +290,6 @@ class InventoryManager {
             });
 
             if (response.ok) {
-                this.showSuccess('Item added successfully');
                 this.resetAddForm();
                 this.loadLocations();
                 this.loadInventory();
@@ -262,7 +325,6 @@ class InventoryManager {
             });
 
             if (response.ok) {
-                this.showSuccess('Item updated successfully');
                 this.closeEditModal();
                 this.loadLocations();
                 this.loadInventory();
@@ -290,6 +352,13 @@ class InventoryManager {
                 document.getElementById('editCurrentCount').value = item.currentCount;
                 document.getElementById('editTargetAmount').value = item.targetAmount;
                 
+                // Ensure location field is enabled and editable
+                const editLocationInput = document.getElementById('editLocation');
+                if (editLocationInput) {
+                    editLocationInput.disabled = false;
+                    editLocationInput.readOnly = false;
+                }
+                
                 document.getElementById('editModal').style.display = 'block';
             }
         } catch (error) {
@@ -309,7 +378,6 @@ class InventoryManager {
             });
 
             if (response.ok) {
-                this.showSuccess('Item deleted successfully');
                 this.loadLocations();
                 this.loadInventory();
             } else {
@@ -384,7 +452,6 @@ class InventoryManager {
             });
 
             if (updateResponse.ok) {
-                this.showSuccess(`Added ${amount} ${item.item} to inventory`);
                 this.loadShoppingList(); // Refresh shopping list
             } else {
                 const error = await updateResponse.json();
@@ -399,6 +466,13 @@ class InventoryManager {
     resetAddForm() {
         document.getElementById('itemForm').reset();
         document.getElementById('formTitle').textContent = 'Add New Item';
+        
+        // Ensure location field is enabled and editable
+        const locationInput = document.getElementById('location');
+        if (locationInput) {
+            locationInput.disabled = false;
+            locationInput.readOnly = false;
+        }
     }
 
     closeEditModal() {
@@ -412,13 +486,191 @@ class InventoryManager {
     }
 
     showSuccess(message) {
-        // Simple alert for now - can be enhanced with toast notifications
-        alert('Success: ' + message);
+        // Silent success - no dialog needed
+        console.log('Success: ' + message);
     }
 
     showError(message) {
         // Simple alert for now - can be enhanced with toast notifications
         alert('Error: ' + message);
+    }
+
+    // Location Management Functions
+    async loadLocationsView() {
+        try {
+            const response = await fetch('/api/inventory');
+            const inventory = await response.json();
+            
+            // Count items per location
+            const locationCounts = {};
+            inventory.forEach(item => {
+                locationCounts[item.location] = (locationCounts[item.location] || 0) + 1;
+            });
+            
+            const tbody = document.querySelector('#locationsTable tbody');
+            tbody.innerHTML = '';
+            
+            if (this.locations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="empty-state">No locations defined</td></tr>';
+                return;
+            }
+            
+            this.locations.forEach(location => {
+                const count = locationCounts[location] || 0;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${this.escapeHtml(location)}</td>
+                    <td>${count}</td>
+                    <td>
+                        <button class="btn-edit btn-small" onclick="inventoryManager.editLocation('${this.escapeHtml(location)}')">Rename</button>
+                        <button class="btn-delete btn-small" onclick="inventoryManager.deleteLocation('${this.escapeHtml(location)}', ${count})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error loading locations view:', error);
+            this.showError('Failed to load locations');
+        }
+    }
+
+    async addLocation() {
+        const newLocationName = document.getElementById('newLocationName').value.trim();
+        
+        if (!newLocationName) {
+            this.showError('Please enter a location name');
+            return;
+        }
+        
+        if (this.locations.includes(newLocationName)) {
+            this.showError('This location already exists');
+            return;
+        }
+        
+        try {
+            // Create a placeholder item to register the location
+            // This item will remain in the database to keep the location active
+            const response = await fetch('/api/inventory', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    brand: '(Location Placeholder)',
+                    item: `Location: ${newLocationName}`,
+                    location: newLocationName,
+                    currentCount: 0,
+                    targetAmount: 0
+                })
+            });
+            
+            if (response.ok) {
+                // Reload locations and refresh the view
+                await this.loadLocations();
+                document.getElementById('newLocationName').value = '';
+                this.loadLocationsView();
+            } else {
+                this.showError('Failed to add location');
+            }
+        } catch (error) {
+            console.error('Error adding location:', error);
+            this.showError('Failed to add location');
+        }
+    }
+
+    editLocation(oldName) {
+        document.getElementById('oldLocationName').value = oldName;
+        document.getElementById('newLocationNameEdit').value = oldName;
+        document.getElementById('editLocationModal').style.display = 'block';
+    }
+
+    async handleEditLocationSubmit(e) {
+        e.preventDefault();
+        
+        const oldName = document.getElementById('oldLocationName').value;
+        const newName = document.getElementById('newLocationNameEdit').value.trim();
+        
+        if (!newName) {
+            this.showError('Please enter a location name');
+            return;
+        }
+        
+        if (oldName === newName) {
+            this.closeEditLocationModal();
+            return;
+        }
+        
+        try {
+            // Update all items with this location
+            const response = await fetch('/api/inventory');
+            const inventory = await response.json();
+            const itemsToUpdate = inventory.filter(item => item.location === oldName);
+            
+            if (itemsToUpdate.length === 0) {
+                this.closeEditLocationModal();
+                await this.loadLocations();
+                this.loadLocationsView();
+                this.showSuccess('Location renamed');
+                return;
+            }
+            
+            // Update each item
+            for (const item of itemsToUpdate) {
+                await fetch(`/api/inventory/${item.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ...item,
+                        location: newName
+                    })
+                });
+            }
+            
+            this.closeEditLocationModal();
+            await this.loadLocations();
+            this.loadLocationsView();
+        } catch (error) {
+            console.error('Error renaming location:', error);
+            this.showError('Failed to rename location');
+        }
+    }
+
+    async deleteLocation(locationName, itemCount) {
+        if (itemCount > 0) {
+            if (!confirm(`This location has ${itemCount} items. Deleting the location will also delete all items in it. Are you sure?`)) {
+                return;
+            }
+        } else {
+            if (!confirm(`Are you sure you want to delete the location "${locationName}"?`)) {
+                return;
+            }
+        }
+        
+        try {
+            // Get all items in this location
+            const response = await fetch('/api/inventory');
+            const inventory = await response.json();
+            const itemsToDelete = inventory.filter(item => item.location === locationName);
+            
+            // Delete each item
+            for (const item of itemsToDelete) {
+                await fetch(`/api/inventory/${item.id}`, {
+                    method: 'DELETE'
+                });
+            }
+            
+            await this.loadLocations();
+            this.loadLocationsView();
+        } catch (error) {
+            console.error('Error deleting location:', error);
+            this.showError('Failed to delete location');
+        }
+    }
+
+    closeEditLocationModal() {
+        document.getElementById('editLocationModal').style.display = 'none';
     }
 }
 
@@ -431,4 +683,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // Global functions for button onclick handlers
 window.closeEditModal = () => {
     inventoryManager.closeEditModal();
+};
+
+window.closeEditLocationModal = () => {
+    inventoryManager.closeEditLocationModal();
 };
