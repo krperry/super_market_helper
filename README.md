@@ -36,7 +36,7 @@ A web-based inventory management system for retail stores that helps track stock
 
 4. **Development Mode** (with auto-restart):
    ```bash
-   npm run dev
+   npm  dev
    ```
 
 The application will be available at `http://localhost:3000`

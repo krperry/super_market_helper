@@ -15,7 +15,8 @@
   "bin": "server.js",
   "pkg": {
     "assets": [
-      "public/**/*"
+      "public/**/*",
+      "node_modules/sqlite3/**/*"
     ],
     "outputPath": "dist"
   },

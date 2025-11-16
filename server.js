@@ -278,7 +278,7 @@ app.get('/api/inventory/inactive', (req, res) => {
 app.get('/api/inventory/location/:location', (req, res) => {
     const location = req.params.location;
     const storeId = req.query.store_id || 1;
-    const query = 'SELECT * FROM inventory WHERE location = ? AND store_id = ? ORDER BY brand, item';
+    const query = 'SELECT * FROM inventory WHERE location = ? AND store_id = ? AND (active = 1 OR active IS NULL) ORDER BY brand, item';
     
     db.all(query, [location, storeId], (err, rows) => {
         if (err) {
