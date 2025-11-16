@@ -115,6 +115,21 @@ function initializeDatabase() {
             console.error('Error creating inventory table:', err);
         } else {
             console.log('Inventory table initialized');
+            // Migrate database: add active column if it doesn't exist
+            db.all("PRAGMA table_info(inventory)", [], (err, columns) => {
+                if (!err) {
+                    const hasActiveColumn = columns.some(col => col.name === 'active');
+                    if (!hasActiveColumn) {
+                        db.run('ALTER TABLE inventory ADD COLUMN active INTEGER DEFAULT 1', (err) => {
+                            if (err) {
+                                console.error('Error adding active column:', err);
+                            } else {
+                                console.log('Added active column to inventory table (migration completed)');
+                            }
+                        });
+                    }
+                }
+            });
         }
     });
 }
@@ -234,7 +249,21 @@ app.delete('/api/stores/:id', (req, res) => {
 // Get all inventory items for a store
 app.get('/api/inventory', (req, res) => {
     const storeId = req.query.store_id || 1;
-    const query = 'SELECT * FROM inventory WHERE store_id = ? ORDER BY location, brand, item';
+    const query = 'SELECT * FROM inventory WHERE store_id = ? AND (active = 1 OR active IS NULL) ORDER BY location, brand, item';
+    
+    db.all(query, [storeId], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+        } else {
+            res.json(rows);
+        }
+    });
+});
+
+// Get all inactive inventory items for a store
+app.get('/api/inventory/inactive', (req, res) => {
+    const storeId = req.query.store_id || 1;
+    const query = 'SELECT * FROM inventory WHERE store_id = ? AND active = 0 ORDER BY location, brand, item';
     
     db.all(query, [storeId], (err, rows) => {
         if (err) {
@@ -266,7 +295,7 @@ app.get('/api/shopping-list', (req, res) => {
     const query = `
         SELECT *, (targetAmount - currentCount) as needed 
         FROM inventory 
-        WHERE currentCount < targetAmount AND store_id = ?
+        WHERE currentCount < targetAmount AND store_id = ? AND (active = 1 OR active IS NULL)
         ORDER BY location, brand, item
     `;
     
@@ -286,7 +315,7 @@ app.get('/api/shopping-list/location/:location', (req, res) => {
     const query = `
         SELECT *, (targetAmount - currentCount) as needed 
         FROM inventory 
-        WHERE currentCount < targetAmount AND location = ? AND store_id = ?
+        WHERE currentCount < targetAmount AND location = ? AND store_id = ? AND (active = 1 OR active IS NULL)
         ORDER BY brand, item
     `;
     
@@ -376,10 +405,30 @@ app.delete('/api/inventory/:id', (req, res) => {
     });
 });
 
+// Toggle item active/inactive status
+app.patch('/api/inventory/:id/toggle-active', (req, res) => {
+    const id = req.params.id;
+    const { active } = req.body;
+    
+    if (active === undefined) {
+        return res.status(400).json({ error: 'active status is required' });
+    }
+    
+    const query = 'UPDATE inventory SET active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+    
+    db.run(query, [active ? 1 : 0, id], function(err) {
+        if (err) {
+            res.status(500).json({ error: err.message });
+        } else {
+            res.json({ message: 'Item status updated successfully', changes: this.changes });
+        }
+    });
+});
+
 // Get all unique locations
 app.get('/api/locations', (req, res) => {
     const storeId = req.query.store_id || 1;
-    const query = 'SELECT DISTINCT location FROM inventory WHERE store_id = ? ORDER BY location';
+    const query = 'SELECT DISTINCT location FROM inventory WHERE store_id = ? AND (active = 1 OR active IS NULL) ORDER BY location';
     
     db.all(query, [storeId], (err, rows) => {
         if (err) {

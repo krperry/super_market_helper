@@ -16,6 +16,7 @@
             </div>
             <nav>
                 <button id="inventoryTab" class="nav-btn active">All Inventory</button>
+                <button id="inactiveTab" class="nav-btn">Inactive Items</button>
                 <button id="shoppingTab" class="nav-btn">Shopping List</button>
                 <button id="addItemTab" class="nav-btn">Add Item</button>
                 <button id="locationsTab" class="nav-btn">Manage Locations</button>
@@ -72,6 +73,31 @@
                     </thead>
                 </table>
             </div>
+            <div id="inactiveControls" class="view-controls" style="display: none;">
+                <label for="searchInactive">Search:</label>
+                <input type="text" id="searchInactive" placeholder="Search brand or item..." style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; min-width: 200px;">
+                
+                <label for="inactiveLocationFilter">Filter by Location:</label>
+                <select id="inactiveLocationFilter">
+                    <option value="">All Locations</option>
+                </select>
+                <button id="refreshInactive" class="btn-primary">Refresh</button>
+            </div>
+            <div id="inactiveTableHeader" class="fixed-table-header" style="display: none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Brand</th>
+                            <th>Item</th>
+                            <th>Location</th>
+                            <th>Current Count</th>
+                            <th>Target Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
         </header>
 
         <main>
@@ -88,6 +114,15 @@
             <div id="shoppingView" class="view">
                 <div class="table-container">
                     <table id="shoppingTable">
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Inactive Items View -->
+            <div id="inactiveView" class="view">
+                <div class="table-container">
+                    <table id="inactiveTable">
                         <tbody></tbody>
                     </table>
                 </div>

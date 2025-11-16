@@ -18,12 +18,17 @@ class InventoryManager {
 
     async loadStores() {
         try {
+            console.log('Loading stores...');
             const response = await fetch('/api/stores');
             this.stores = await response.json();
+            console.log('Stores loaded:', this.stores);
             
             if (this.stores.length > 0) {
                 this.currentStoreId = this.stores[0].id;
+                console.log('Current store ID set to:', this.currentStoreId);
                 this.populateStoreSelector();
+            } else {
+                console.error('No stores found!');
             }
         } catch (error) {
             console.error('Error loading stores:', error);
@@ -51,6 +56,7 @@ class InventoryManager {
         
         // Navigation
         document.getElementById('inventoryTab').addEventListener('click', () => this.showView('inventory'));
+        document.getElementById('inactiveTab').addEventListener('click', () => this.showView('inactive'));
         document.getElementById('shoppingTab').addEventListener('click', () => this.showView('shopping'));
         document.getElementById('addItemTab').addEventListener('click', () => this.showView('addItem'));
         document.getElementById('locationsTab').addEventListener('click', () => this.showView('locations'));
@@ -64,14 +70,17 @@ class InventoryManager {
 
         // Refresh buttons
         document.getElementById('refreshInventory').addEventListener('click', () => this.loadInventory());
+        document.getElementById('refreshInactive').addEventListener('click', () => this.loadInactiveItems());
         document.getElementById('refreshShopping').addEventListener('click', () => this.loadShoppingList());
 
         // Location filters
         document.getElementById('locationFilter').addEventListener('change', () => this.loadInventory());
+        document.getElementById('inactiveLocationFilter').addEventListener('change', () => this.loadInactiveItems());
         document.getElementById('shoppingLocationFilter').addEventListener('change', () => this.loadShoppingList());
 
         // Search filters
         document.getElementById('searchItems').addEventListener('input', () => this.loadInventory());
+        document.getElementById('searchInactive').addEventListener('input', () => this.loadInactiveItems());
         document.getElementById('searchShopping').addEventListener('input', () => this.loadShoppingList());
 
         // Add Form handling
@@ -112,6 +121,9 @@ class InventoryManager {
             case 'inventory':
                 this.loadInventory();
                 break;
+            case 'inactive':
+                this.loadInactiveItems();
+                break;
             case 'shopping':
                 this.loadShoppingList();
                 break;
@@ -136,6 +148,8 @@ class InventoryManager {
         // Show/hide appropriate controls and table headers
         document.getElementById('inventoryControls').style.display = viewName === 'inventory' ? 'flex' : 'none';
         document.getElementById('inventoryTableHeader').style.display = viewName === 'inventory' ? 'block' : 'none';
+        document.getElementById('inactiveControls').style.display = viewName === 'inactive' ? 'flex' : 'none';
+        document.getElementById('inactiveTableHeader').style.display = viewName === 'inactive' ? 'block' : 'none';
         document.getElementById('shoppingControls').style.display = viewName === 'shopping' ? 'flex' : 'none';
         document.getElementById('shoppingTableHeader').style.display = viewName === 'shopping' ? 'block' : 'none';
 
@@ -145,6 +159,9 @@ class InventoryManager {
         switch(viewName) {
             case 'inventory':
                 this.loadInventory();
+                break;
+            case 'inactive':
+                this.loadInactiveItems();
                 break;
             case 'shopping':
                 this.loadShoppingList();
@@ -168,6 +185,7 @@ class InventoryManager {
             
             const locationFilter = document.getElementById('locationFilter');
             const shoppingLocationFilter = document.getElementById('shoppingLocationFilter');
+            const inactiveLocationFilter = document.getElementById('inactiveLocationFilter');
             const location = document.getElementById('location');
             const editLocation = document.getElementById('editLocation');
             
@@ -177,6 +195,9 @@ class InventoryManager {
             }
             if (shoppingLocationFilter) {
                 shoppingLocationFilter.innerHTML = '<option value="">All Locations</option>';
+            }
+            if (inactiveLocationFilter) {
+                inactiveLocationFilter.innerHTML = '<option value="">All Locations</option>';
             }
             if (location) {
                 location.innerHTML = '<option value="">Select Location</option>';
@@ -194,6 +215,10 @@ class InventoryManager {
                 if (shoppingLocationFilter) {
                     const option2 = new Option(loc, loc);
                     shoppingLocationFilter.appendChild(option2);
+                }
+                if (inactiveLocationFilter) {
+                    const option3 = new Option(loc, loc);
+                    inactiveLocationFilter.appendChild(option3);
                 }
                 
                 // Add to add/edit location selects
@@ -217,9 +242,13 @@ class InventoryManager {
         const baseUrl = locationFilter ? `/api/inventory/location/${encodeURIComponent(locationFilter)}` : '/api/inventory';
         const url = `${baseUrl}?store_id=${this.currentStoreId}`;
         
+        console.log('Loading inventory from:', url);
+        
         try {
             const response = await fetch(url);
             let inventory = await response.json();
+            
+            console.log('Inventory loaded:', inventory.length, 'items');
             
             // Apply search filter
             if (searchTerm) {
@@ -269,6 +298,39 @@ class InventoryManager {
         }
     }
 
+    async loadInactiveItems() {
+        const locationFilter = document.getElementById('inactiveLocationFilter').value;
+        const searchTerm = document.getElementById('searchInactive').value.toLowerCase().trim();
+        const url = `/api/inventory/inactive?store_id=${this.currentStoreId}`;
+        
+        try {
+            const response = await fetch(url);
+            let inventory = await response.json();
+            
+            // Apply location filter
+            if (locationFilter) {
+                inventory = inventory.filter(item => item.location === locationFilter);
+            }
+            
+            // Apply search filter
+            if (searchTerm) {
+                inventory = inventory.filter(item => 
+                    item.brand.toLowerCase().includes(searchTerm) || 
+                    item.item.toLowerCase().includes(searchTerm) ||
+                    item.location.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // Sort alphabetically by item name
+            inventory.sort((a, b) => a.item.localeCompare(b.item));
+            
+            this.renderInactiveTable(inventory);
+        } catch (error) {
+            console.error('Error loading inactive items:', error);
+            this.showError('Failed to load inactive items');
+        }
+    }
+
     renderInventoryTable(inventory) {
         const tbody = document.querySelector('#inventoryTable tbody');
         tbody.innerHTML = '';
@@ -296,6 +358,7 @@ class InventoryManager {
                 <td>
                     <button class="btn-edit btn-small" onclick="inventoryManager.editItem(${item.id})">Edit</button>
                     <button class="btn-delete btn-small" onclick="inventoryManager.deleteItem(${item.id})">Delete</button>
+                    <button class="btn-secondary btn-small" onclick="inventoryManager.inactivateItem(${item.id})">Inactivate</button>
                 </td>
             `;
             tbody.appendChild(row);
@@ -333,6 +396,34 @@ class InventoryManager {
                 }
             });
             
+            tbody.appendChild(row);
+        });
+    }
+
+    renderInactiveTable(inventory) {
+        const tbody = document.querySelector('#inactiveTable tbody');
+        tbody.innerHTML = '';
+
+        if (inventory.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No inactive items found</td></tr>';
+            return;
+        }
+
+        inventory.forEach(item => {
+            const row = document.createElement('tr');
+            const status = this.getItemStatus(item);
+            
+            row.innerHTML = `
+                <td>${this.escapeHtml(item.brand)}</td>
+                <td>${this.escapeHtml(item.item)}</td>
+                <td>${this.escapeHtml(item.location)}</td>
+                <td>${item.currentCount}</td>
+                <td>${item.targetAmount}</td>
+                <td><span class="status-${status.class}">${status.text}</span></td>
+                <td>
+                    <button class="btn-primary btn-small" onclick="inventoryManager.activateItem(${item.id})">Activate</button>
+                </td>
+            `;
             tbody.appendChild(row);
         });
     }
@@ -470,6 +561,50 @@ class InventoryManager {
         } catch (error) {
             console.error('Error deleting item:', error);
             this.showError('Failed to delete item');
+        }
+    }
+
+    async inactivateItem(id) {
+        try {
+            const response = await fetch(`/api/inventory/${id}/toggle-active`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ active: false })
+            });
+
+            if (response.ok) {
+                this.loadInventory();
+            } else {
+                const error = await response.json();
+                this.showError(error.error || 'Failed to inactivate item');
+            }
+        } catch (error) {
+            console.error('Error inactivating item:', error);
+            this.showError('Failed to inactivate item');
+        }
+    }
+
+    async activateItem(id) {
+        try {
+            const response = await fetch(`/api/inventory/${id}/toggle-active`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ active: true })
+            });
+
+            if (response.ok) {
+                this.loadInactiveItems();
+            } else {
+                const error = await response.json();
+                this.showError(error.error || 'Failed to activate item');
+            }
+        } catch (error) {
+            console.error('Error activating item:', error);
+            this.showError('Failed to activate item');
         }
     }
 

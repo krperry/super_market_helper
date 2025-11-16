@@ -348,6 +348,28 @@ th:last-child {
 #shoppingTableHeader th:nth-child(8),
 #shoppingView .table-container td:nth-child(8) { width: 10%; }
 
+/* Specific column widths for inactive table */
+#inactiveTableHeader th:nth-child(1),
+#inactiveView .table-container td:nth-child(1) { width: 15%; }
+
+#inactiveTableHeader th:nth-child(2),
+#inactiveView .table-container td:nth-child(2) { width: 25%; }
+
+#inactiveTableHeader th:nth-child(3),
+#inactiveView .table-container td:nth-child(3) { width: 15%; }
+
+#inactiveTableHeader th:nth-child(4),
+#inactiveView .table-container td:nth-child(4) { width: 12%; }
+
+#inactiveTableHeader th:nth-child(5),
+#inactiveView .table-container td:nth-child(5) { width: 12%; }
+
+#inactiveTableHeader th:nth-child(6),
+#inactiveView .table-container td:nth-child(6) { width: 10%; }
+
+#inactiveTableHeader th:nth-child(7),
+#inactiveView .table-container td:nth-child(7) { width: 11%; }
+
 tr:hover {
     background-color: #f8f9fa;
 }
