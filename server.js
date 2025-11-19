@@ -7,7 +7,12 @@ const fs = require('fs');
 const { exec } = require('child_process');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+// Allow port to be passed as command line argument: node server.js 3045
+// Use --no-browser flag to disable auto-opening browser: node server.js 3045 --no-browser
+const args = process.argv.slice(2);
+const portArg = args.find(arg => !arg.startsWith('--'));
+const noBrowser = args.includes('--no-browser');
+const PORT = portArg || process.env.PORT || 3000;
 
 // Write PID file for stop script - use process.cwd() for PKG compatibility
 const pidFile = path.join(process.cwd(), '.server.pid');
@@ -232,14 +237,25 @@ app.delete('/api/stores/:id', (req, res) => {
             return res.status(400).json({ error: 'Cannot delete the last store' });
         }
         
-        const query = 'DELETE FROM stores WHERE id = ?';
-        
-        db.run(query, [id], function(err) {
+        // First delete all inventory items for this store
+        db.run('DELETE FROM inventory WHERE store_id = ?', [id], (err) => {
             if (err) {
-                res.status(500).json({ error: err.message });
-            } else {
-                res.json({ message: 'Store deleted successfully', changes: this.changes });
+                return res.status(500).json({ error: 'Error deleting inventory: ' + err.message });
             }
+            
+            // Then delete the store
+            const query = 'DELETE FROM stores WHERE id = ?';
+            
+            db.run(query, [id], function(err) {
+                if (err) {
+                    res.status(500).json({ error: err.message });
+                } else {
+                    res.json({ 
+                        message: 'Store and associated inventory deleted successfully', 
+                        changes: this.changes 
+                    });
+                }
+            });
         });
     });
 });
@@ -428,8 +444,8 @@ app.patch('/api/inventory/:id/toggle-active', (req, res) => {
 // Get all unique locations
 app.get('/api/locations', (req, res) => {
     const storeId = req.query.store_id || 1;
-    const query = 'SELECT DISTINCT location FROM inventory WHERE store_id = ? AND (active = 1 OR active IS NULL) ORDER BY location';
-    
+    // Return all locations for the store, regardless of item active status
+    const query = 'SELECT DISTINCT location FROM inventory WHERE store_id = ? ORDER BY location';
     db.all(query, [storeId], (err, rows) => {
         if (err) {
             res.status(500).json({ error: err.message });
@@ -444,16 +460,21 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start server
-app.listen(PORT, () => {
+// Start server - bind to 0.0.0.0 to allow network access
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Store Inventory Manager running on http://localhost:${PORT}`);
-    console.log('Opening browser...');
+    console.log(`Network access: http://<your-ip>:${PORT}`);
     
-    // Auto-open browser
-    const url = `http://localhost:${PORT}`;
-    const start = process.platform === 'win32' ? 'start' : 
-                  process.platform === 'darwin' ? 'open' : 'xdg-open';
-    exec(`${start} ${url}`);
+    // Auto-open browser unless --no-browser flag is set
+    if (!noBrowser) {
+        console.log('Opening browser...');
+        const url = `http://localhost:${PORT}`;
+        const start = process.platform === 'win32' ? 'start' : 
+                      process.platform === 'darwin' ? 'open' : 'xdg-open';
+        exec(`${start} ${url}`);
+    } else {
+        console.log('Browser auto-open disabled');
+    }
 });
 
 // Graceful shutdown

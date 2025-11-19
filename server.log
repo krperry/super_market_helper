@@ -1,0 +1,7 @@
+Server PID: 2396053
+Store Inventory Manager running on http://localhost:3045
+Network access: http://<your-ip>:3045
+Browser auto-open disabled
+Connected to SQLite database at: /mnt/home/kperry/matt_shop/database/inventory.db
+Stores table initialized
+Inventory table initialized
