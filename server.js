@@ -80,6 +80,7 @@ function initializeDatabase() {
             location TEXT NOT NULL,
             currentCount INTEGER DEFAULT 0,
             targetAmount INTEGER DEFAULT 0,
+            extra INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
@@ -120,16 +121,28 @@ function initializeDatabase() {
             console.error('Error creating inventory table:', err);
         } else {
             console.log('Inventory table initialized');
-            // Migrate database: add active column if it doesn't exist
+            // Migrate database: add active and extra columns if they don't exist
             db.all("PRAGMA table_info(inventory)", [], (err, columns) => {
                 if (!err) {
                     const hasActiveColumn = columns.some(col => col.name === 'active');
+                    const hasExtraColumn = columns.some(col => col.name === 'extra');
+                    
                     if (!hasActiveColumn) {
                         db.run('ALTER TABLE inventory ADD COLUMN active INTEGER DEFAULT 1', (err) => {
                             if (err) {
                                 console.error('Error adding active column:', err);
                             } else {
                                 console.log('Added active column to inventory table (migration completed)');
+                            }
+                        });
+                    }
+                    
+                    if (!hasExtraColumn) {
+                        db.run('ALTER TABLE inventory ADD COLUMN extra INTEGER DEFAULT 0', (err) => {
+                            if (err) {
+                                console.error('Error adding extra column:', err);
+                            } else {
+                                console.log('Added extra column to inventory table (migration completed)');
                             }
                         });
                     }
@@ -309,9 +322,9 @@ app.get('/api/inventory/location/:location', (req, res) => {
 app.get('/api/shopping-list', (req, res) => {
     const storeId = req.query.store_id || 1;
     const query = `
-        SELECT *, (targetAmount - currentCount) as needed 
+        SELECT *, (targetAmount - currentCount + COALESCE(extra, 0)) as needed 
         FROM inventory 
-        WHERE currentCount < targetAmount AND store_id = ? AND (active = 1 OR active IS NULL)
+        WHERE currentCount < (targetAmount + COALESCE(extra, 0)) AND store_id = ? AND (active = 1 OR active IS NULL)
         ORDER BY location, brand, item
     `;
     
@@ -329,9 +342,9 @@ app.get('/api/shopping-list/location/:location', (req, res) => {
     const location = req.params.location;
     const storeId = req.query.store_id || 1;
     const query = `
-        SELECT *, (targetAmount - currentCount) as needed 
+        SELECT *, (targetAmount - currentCount + COALESCE(extra, 0)) as needed 
         FROM inventory 
-        WHERE currentCount < targetAmount AND location = ? AND store_id = ? AND (active = 1 OR active IS NULL)
+        WHERE currentCount < (targetAmount + COALESCE(extra, 0)) AND location = ? AND store_id = ? AND (active = 1 OR active IS NULL)
         ORDER BY brand, item
     `;
     
@@ -346,7 +359,7 @@ app.get('/api/shopping-list/location/:location', (req, res) => {
 
 // Add new inventory item
 app.post('/api/inventory', (req, res) => {
-    const { brand, item, location, currentCount, targetAmount, store_id } = req.body;
+    const { brand, item, location, currentCount, targetAmount, extra, store_id } = req.body;
     const storeId = store_id || 1;
     
     if (!brand || !item || !location) {
@@ -354,11 +367,11 @@ app.post('/api/inventory', (req, res) => {
     }
     
     const query = `
-        INSERT INTO inventory (store_id, brand, item, location, currentCount, targetAmount, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO inventory (store_id, brand, item, location, currentCount, targetAmount, extra, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     `;
     
-    db.run(query, [storeId, brand, item, location, currentCount || 0, targetAmount || 0], function(err) {
+    db.run(query, [storeId, brand, item, location, currentCount || 0, targetAmount || 0, extra || 0], function(err) {
         if (err) {
             res.status(500).json({ error: err.message });
         } else {
@@ -370,15 +383,15 @@ app.post('/api/inventory', (req, res) => {
 // Update inventory item
 app.put('/api/inventory/:id', (req, res) => {
     const id = req.params.id;
-    const { brand, item, location, currentCount, targetAmount } = req.body;
+    const { brand, item, location, currentCount, targetAmount, extra } = req.body;
     
     const query = `
         UPDATE inventory 
-        SET brand = ?, item = ?, location = ?, currentCount = ?, targetAmount = ?, updated_at = CURRENT_TIMESTAMP
+        SET brand = ?, item = ?, location = ?, currentCount = ?, targetAmount = ?, extra = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
     `;
     
-    db.run(query, [brand, item, location, currentCount, targetAmount, id], function(err) {
+    db.run(query, [brand, item, location, currentCount, targetAmount, extra || 0, id], function(err) {
         if (err) {
             res.status(500).json({ error: err.message });
         } else {
@@ -403,6 +416,26 @@ app.patch('/api/inventory/:id/quantity', (req, res) => {
             res.status(500).json({ error: err.message });
         } else {
             res.json({ message: 'Quantities updated successfully', changes: this.changes });
+        }
+    });
+});
+
+// Update extra amount for inventory item
+app.patch('/api/inventory/:id/extra', (req, res) => {
+    const id = req.params.id;
+    const { extra } = req.body;
+    
+    const query = `
+        UPDATE inventory 
+        SET extra = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    `;
+    
+    db.run(query, [extra || 0, id], function(err) {
+        if (err) {
+            res.status(500).json({ error: err.message });
+        } else {
+            res.json({ message: 'Extra amount updated successfully', changes: this.changes });
         }
     });
 });

@@ -303,72 +303,96 @@ th:last-child {
 
 /* Specific column widths for inventory table */
 #inventoryTableHeader th:nth-child(1),
-#inventoryView .table-container td:nth-child(1) { width: 15%; }
+#inventoryView .table-container td:nth-child(1) { width: 12%; } /* Brand */
 
 #inventoryTableHeader th:nth-child(2),
-#inventoryView .table-container td:nth-child(2) { width: 25%; }
+#inventoryView .table-container td:nth-child(2) { 
+    width: 20%; /* Item - reduced from 25% */
+    word-wrap: break-word;
+    white-space: normal;
+    padding: 8px 4px;
+}
 
 #inventoryTableHeader th:nth-child(3),
-#inventoryView .table-container td:nth-child(3) { width: 15%; }
+#inventoryView .table-container td:nth-child(3) { width: 12%; } /* Location */
 
 #inventoryTableHeader th:nth-child(4),
-#inventoryView .table-container td:nth-child(4) { width: 12%; }
+#inventoryView .table-container td:nth-child(4) { width: 10%; } /* Current Count */
 
 #inventoryTableHeader th:nth-child(5),
-#inventoryView .table-container td:nth-child(5) { width: 12%; }
+#inventoryView .table-container td:nth-child(5) { width: 10%; } /* Target Amount */
 
 #inventoryTableHeader th:nth-child(6),
-#inventoryView .table-container td:nth-child(6) { width: 10%; }
+#inventoryView .table-container td:nth-child(6) { width: 8%; } /* Extra */
 
 #inventoryTableHeader th:nth-child(7),
-#inventoryView .table-container td:nth-child(7) { width: 11%; }
+#inventoryView .table-container td:nth-child(7) { width: 10%; } /* Status */
+
+#inventoryTableHeader th:nth-child(8),
+#inventoryView .table-container td:nth-child(8) { width: 18%; } /* Actions */
 
 /* Specific column widths for shopping table */
 #shoppingTableHeader th:nth-child(1),
-#shoppingView .table-container td:nth-child(1) { width: 15%; }
+#shoppingView .table-container td:nth-child(1) { width: 12%; } /* Brand */
 
 #shoppingTableHeader th:nth-child(2),
-#shoppingView .table-container td:nth-child(2) { width: 20%; }
+#shoppingView .table-container td:nth-child(2) { 
+    width: 18%; /* Item */
+    word-wrap: break-word;
+    white-space: normal;
+    padding: 8px 4px;
+}
 
 #shoppingTableHeader th:nth-child(3),
-#shoppingView .table-container td:nth-child(3) { width: 13%; }
+#shoppingView .table-container td:nth-child(3) { width: 12%; } /* Location */
 
 #shoppingTableHeader th:nth-child(4),
-#shoppingView .table-container td:nth-child(4) { width: 10%; }
+#shoppingView .table-container td:nth-child(4) { width: 10%; } /* Current Count */
 
 #shoppingTableHeader th:nth-child(5),
-#shoppingView .table-container td:nth-child(5) { width: 10%; }
+#shoppingView .table-container td:nth-child(5) { width: 10%; } /* Target Amount */
 
 #shoppingTableHeader th:nth-child(6),
-#shoppingView .table-container td:nth-child(6) { width: 10%; }
+#shoppingView .table-container td:nth-child(6) { width: 8%; } /* Extra */
 
 #shoppingTableHeader th:nth-child(7),
-#shoppingView .table-container td:nth-child(7) { width: 12%; }
+#shoppingView .table-container td:nth-child(7) { width: 10%; } /* Need to Buy */
 
 #shoppingTableHeader th:nth-child(8),
-#shoppingView .table-container td:nth-child(8) { width: 10%; }
+#shoppingView .table-container td:nth-child(8) { width: 10%; } /* Purchased */
+
+#shoppingTableHeader th:nth-child(9),
+#shoppingView .table-container td:nth-child(9) { width: 10%; } /* Checkbox */
 
 /* Specific column widths for inactive table */
 #inactiveTableHeader th:nth-child(1),
-#inactiveView .table-container td:nth-child(1) { width: 15%; }
+#inactiveView .table-container td:nth-child(1) { width: 12%; } /* Brand */
 
 #inactiveTableHeader th:nth-child(2),
-#inactiveView .table-container td:nth-child(2) { width: 25%; }
+#inactiveView .table-container td:nth-child(2) { 
+    width: 20%; /* Item */
+    word-wrap: break-word;
+    white-space: normal;
+    padding: 8px 4px;
+}
 
 #inactiveTableHeader th:nth-child(3),
-#inactiveView .table-container td:nth-child(3) { width: 15%; }
+#inactiveView .table-container td:nth-child(3) { width: 12%; } /* Location */
 
 #inactiveTableHeader th:nth-child(4),
-#inactiveView .table-container td:nth-child(4) { width: 12%; }
+#inactiveView .table-container td:nth-child(4) { width: 10%; } /* Current Count */
 
 #inactiveTableHeader th:nth-child(5),
-#inactiveView .table-container td:nth-child(5) { width: 12%; }
+#inactiveView .table-container td:nth-child(5) { width: 10%; } /* Target Amount */
 
 #inactiveTableHeader th:nth-child(6),
-#inactiveView .table-container td:nth-child(6) { width: 10%; }
+#inactiveView .table-container td:nth-child(6) { width: 8%; } /* Extra */
 
 #inactiveTableHeader th:nth-child(7),
-#inactiveView .table-container td:nth-child(7) { width: 11%; }
+#inactiveView .table-container td:nth-child(7) { width: 10%; } /* Status */
+
+#inactiveTableHeader th:nth-child(8),
+#inactiveView .table-container td:nth-child(8) { width: 18%; } /* Actions */
 
 tr:hover {
     background-color: #f8f9fa;

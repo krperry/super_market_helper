@@ -41,6 +41,7 @@
                             <th>Location</th>
                             <th>Current Count</th>
                             <th>Target Amount</th>
+                            <th>Extra</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -66,6 +67,7 @@
                             <th>Location</th>
                             <th>Current Count</th>
                             <th>Target Amount</th>
+                            <th>Extra</th>
                             <th>Need to Buy</th>
                             <th>Purchased</th>
                             <th>✓</th>
@@ -92,6 +94,7 @@
                             <th>Location</th>
                             <th>Current Count</th>
                             <th>Target Amount</th>
+                            <th>Extra</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -152,12 +155,17 @@
 
                         <div class="form-group">
                             <label for="currentCount">Current Count:</label>
-                            <input type="number" id="currentCount" min="0" value="0">
+                            <input type="number" id="currentCount" min="0" step="1" value="0" style="padding: 8px; font-size: 14px; min-width: 100px;">
                         </div>
 
                         <div class="form-group">
                             <label for="targetAmount">Target Amount:</label>
-                            <input type="number" id="targetAmount" min="0" value="0">
+                            <input type="number" id="targetAmount" min="0" step="1" value="0" style="padding: 8px; font-size: 14px; min-width: 100px;">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="extra">Extra:</label>
+                            <input type="number" id="extra" min="0" step="1" value="0" placeholder="Additional amount beyond target" style="padding: 8px; font-size: 14px; min-width: 100px;">
                         </div>
 
                         <div class="form-actions">
@@ -276,12 +284,17 @@
 
                 <div class="form-group">
                     <label for="editCurrentCount">Current Count:</label>
-                    <input type="number" id="editCurrentCount" min="0" required>
+                    <input type="number" id="editCurrentCount" min="0" step="1" required style="padding: 8px; font-size: 14px; min-width: 100px;">
                 </div>
 
                 <div class="form-group">
                     <label for="editTargetAmount">Target Amount:</label>
-                    <input type="number" id="editTargetAmount" min="0" required>
+                    <input type="number" id="editTargetAmount" min="0" step="1" required style="padding: 8px; font-size: 14px; min-width: 100px;">
+                </div>
+
+                <div class="form-group">
+                    <label for="editExtra">Extra:</label>
+                    <input type="number" id="editExtra" min="0" step="1" value="0" placeholder="Additional amount beyond target" style="padding: 8px; font-size: 14px; min-width: 100px;">
                 </div>
 
                 <div class="form-actions">

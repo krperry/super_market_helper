@@ -354,6 +354,11 @@ class InventoryManager {
                            style="width: 60px;">
                 </td>
                 <td>${item.targetAmount}</td>
+                <td>
+                    <input type="number" class="extra-amount" value="${item.extra || 0}" min="0" 
+                           onchange="inventoryManager.updateExtra(${item.id}, this.value)" 
+                           style="width: 60px;">
+                </td>
                 <td><span class="status-${status.class}">${status.text}</span></td>
                 <td>
                     <button class="btn-edit btn-small" onclick="inventoryManager.editItem(${item.id})">Edit</button>
@@ -382,6 +387,7 @@ class InventoryManager {
                 <td>${this.escapeHtml(item.location)}</td>
                 <td>${item.currentCount}</td>
                 <td>${item.targetAmount}</td>
+                <td>${item.extra || 0}</td>
                 <td><strong>${item.needed}</strong></td>
                 <td><input type="number" class="purchase-amount" data-item-id="${item.id}" min="0" value="${item.needed}" style="width: 60px;"></td>
                 <td><input type="checkbox" class="purchase-checkbox" data-item-id="${item.id}"></td>
@@ -419,6 +425,7 @@ class InventoryManager {
                 <td>${this.escapeHtml(item.location)}</td>
                 <td>${item.currentCount}</td>
                 <td>${item.targetAmount}</td>
+                <td>${item.extra || 0}</td>
                 <td><span class="status-${status.class}">${status.text}</span></td>
                 <td>
                     <button class="btn-primary btn-small" onclick="inventoryManager.activateItem(${item.id})">Activate</button>
@@ -429,13 +436,15 @@ class InventoryManager {
     }
 
     getItemStatus(item) {
-        if (item.currentCount === 0 && item.targetAmount === 0) {
+        const totalTarget = item.targetAmount + (item.extra || 0);
+        
+        if (item.currentCount === 0 && totalTarget === 0) {
             return { class: 'unlicensed', text: 'Unlicensed' };
         } else if (item.currentCount === 0) {
             return { class: 'out', text: 'Out of Stock' };
-        } else if (item.currentCount < item.targetAmount) {
+        } else if (item.currentCount < totalTarget) {
             return { class: 'low', text: 'Low Stock' };
-        } else if (item.currentCount > item.targetAmount) {
+        } else if (item.currentCount > totalTarget) {
             return { class: 'over', text: 'Overstocked' };
         } else {
             return { class: 'ok', text: 'In Stock' };
@@ -451,6 +460,7 @@ class InventoryManager {
             location: document.getElementById('location').value.trim(),
             currentCount: parseInt(document.getElementById('currentCount').value) || 0,
             targetAmount: parseInt(document.getElementById('targetAmount').value) || 0,
+            extra: parseInt(document.getElementById('extra').value) || 0,
             store_id: this.currentStoreId
         };
 
@@ -486,7 +496,8 @@ class InventoryManager {
             item: document.getElementById('editItem').value.trim(),
             location: document.getElementById('editLocation').value.trim(),
             currentCount: parseInt(document.getElementById('editCurrentCount').value) || 0,
-            targetAmount: parseInt(document.getElementById('editTargetAmount').value) || 0
+            targetAmount: parseInt(document.getElementById('editTargetAmount').value) || 0,
+            extra: parseInt(document.getElementById('editExtra').value) || 0
         };
 
         try {
@@ -525,6 +536,7 @@ class InventoryManager {
                 document.getElementById('editLocation').value = item.location;
                 document.getElementById('editCurrentCount').value = item.currentCount;
                 document.getElementById('editTargetAmount').value = item.targetAmount;
+                document.getElementById('editExtra').value = item.extra || 0;
                 
                 // Ensure location field is enabled and editable
                 const editLocationInput = document.getElementById('editLocation');
@@ -638,6 +650,32 @@ class InventoryManager {
         } catch (error) {
             console.error('Error updating count:', error);
             this.showError('Failed to update count');
+            this.loadInventory(); // Reload to reset input
+        }
+    }
+
+    async updateExtra(id, newExtra) {
+        try {
+            const updateResponse = await fetch(`/api/inventory/${id}/extra`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    extra: parseInt(newExtra) || 0
+                })
+            });
+
+            if (updateResponse.ok) {
+                this.loadInventory(); // Refresh to update status
+            } else {
+                const error = await updateResponse.json();
+                this.showError(error.error || 'Failed to update extra');
+                this.loadInventory(); // Reload to reset input
+            }
+        } catch (error) {
+            console.error('Error updating extra:', error);
+            this.showError('Failed to update extra');
             this.loadInventory(); // Reload to reset input
         }
     }
