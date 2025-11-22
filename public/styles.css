@@ -394,6 +394,21 @@ th:last-child {
 #inactiveTableHeader th:nth-child(8),
 #inactiveView .table-container td:nth-child(8) { width: 18%; } /* Actions */
 
+/* Specific column widths for unlicensed table */
+#unlicensedTableHeader th:nth-child(1),
+#unlicensedView .table-container td:nth-child(1) { width: 40%; } /* Brand */
+
+#unlicensedTableHeader th:nth-child(2),
+#unlicensedView .table-container td:nth-child(2) { 
+    width: 40%; /* Item */
+    word-wrap: break-word;
+    white-space: normal;
+    padding: 8px 4px;
+}
+
+#unlicensedTableHeader th:nth-child(3),
+#unlicensedView .table-container td:nth-child(3) { width: 20%; } /* Actions */
+
 tr:hover {
     background-color: #f8f9fa;
 }

@@ -56,6 +56,7 @@ class InventoryManager {
         
         // Navigation
         document.getElementById('inventoryTab').addEventListener('click', () => this.showView('inventory'));
+        document.getElementById('unlicensedTab').addEventListener('click', () => this.showView('unlicensed'));
         document.getElementById('inactiveTab').addEventListener('click', () => this.showView('inactive'));
         document.getElementById('shoppingTab').addEventListener('click', () => this.showView('shopping'));
         document.getElementById('addItemTab').addEventListener('click', () => this.showView('addItem'));
@@ -70,6 +71,7 @@ class InventoryManager {
 
         // Refresh buttons
         document.getElementById('refreshInventory').addEventListener('click', () => this.loadInventory());
+        document.getElementById('refreshUnlicensed').addEventListener('click', () => this.loadUnlicensedItems());
         document.getElementById('refreshInactive').addEventListener('click', () => this.loadInactiveItems());
         document.getElementById('refreshShopping').addEventListener('click', () => this.loadShoppingList());
 
@@ -80,6 +82,7 @@ class InventoryManager {
 
         // Search filters
         document.getElementById('searchItems').addEventListener('input', () => this.loadInventory());
+        document.getElementById('searchUnlicensed').addEventListener('input', () => this.loadUnlicensedItems());
         document.getElementById('searchInactive').addEventListener('input', () => this.loadInactiveItems());
         document.getElementById('searchShopping').addEventListener('input', () => this.loadShoppingList());
 
@@ -121,6 +124,9 @@ class InventoryManager {
             case 'inventory':
                 this.loadInventory();
                 break;
+            case 'unlicensed':
+                this.loadUnlicensedItems();
+                break;
             case 'inactive':
                 this.loadInactiveItems();
                 break;
@@ -148,6 +154,8 @@ class InventoryManager {
         // Show/hide appropriate controls and table headers
         document.getElementById('inventoryControls').style.display = viewName === 'inventory' ? 'flex' : 'none';
         document.getElementById('inventoryTableHeader').style.display = viewName === 'inventory' ? 'block' : 'none';
+        document.getElementById('unlicensedControls').style.display = viewName === 'unlicensed' ? 'flex' : 'none';
+        document.getElementById('unlicensedTableHeader').style.display = viewName === 'unlicensed' ? 'block' : 'none';
         document.getElementById('inactiveControls').style.display = viewName === 'inactive' ? 'flex' : 'none';
         document.getElementById('inactiveTableHeader').style.display = viewName === 'inactive' ? 'block' : 'none';
         document.getElementById('shoppingControls').style.display = viewName === 'shopping' ? 'flex' : 'none';
@@ -159,6 +167,9 @@ class InventoryManager {
         switch(viewName) {
             case 'inventory':
                 this.loadInventory();
+                break;
+            case 'unlicensed':
+                this.loadUnlicensedItems();
                 break;
             case 'inactive':
                 this.loadInactiveItems();
@@ -250,6 +261,11 @@ class InventoryManager {
             
             console.log('Inventory loaded:', inventory.length, 'items');
             
+            // Filter out unlicensed items (where target is 0 - current count doesn't matter)
+            inventory = inventory.filter(item => 
+                item.targetAmount > 0
+            );
+            
             // Apply search filter
             if (searchTerm) {
                 inventory = inventory.filter(item => 
@@ -328,6 +344,40 @@ class InventoryManager {
         } catch (error) {
             console.error('Error loading inactive items:', error);
             this.showError('Failed to load inactive items');
+        }
+    }
+
+    async loadUnlicensedItems() {
+        const searchTerm = document.getElementById('searchUnlicensed').value.toLowerCase().trim();
+        const url = `/api/inventory?store_id=${this.currentStoreId}`;
+        
+        try {
+            const response = await fetch(url);
+            let inventory = await response.json();
+            
+            // Filter for unlicensed items (where target is 0 - current count doesn't matter)
+            inventory = inventory.filter(item => 
+                item.targetAmount === 0 && (item.active === 1 || item.active === null)
+            );
+            
+            // Apply search filter
+            if (searchTerm) {
+                inventory = inventory.filter(item => 
+                    item.brand.toLowerCase().includes(searchTerm) || 
+                    item.item.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // Sort alphabetically by brand then item name
+            inventory.sort((a, b) => {
+                const brandCompare = a.brand.localeCompare(b.brand);
+                return brandCompare !== 0 ? brandCompare : a.item.localeCompare(b.item);
+            });
+            
+            this.renderUnlicensedTable(inventory);
+        } catch (error) {
+            console.error('Error loading unlicensed items:', error);
+            this.showError('Failed to load unlicensed items');
         }
     }
 
@@ -435,10 +485,33 @@ class InventoryManager {
         });
     }
 
+    renderUnlicensedTable(inventory) {
+        const tbody = document.querySelector('#unlicensedTable tbody');
+        tbody.innerHTML = '';
+
+        if (inventory.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="empty-state">No unlicensed items found</td></tr>';
+            return;
+        }
+
+        inventory.forEach(item => {
+            const row = document.createElement('tr');
+            
+            row.innerHTML = `
+                <td>${this.escapeHtml(item.brand)}</td>
+                <td>${this.escapeHtml(item.item)}</td>
+                <td>
+                    <button class="btn-edit btn-small" onclick="inventoryManager.editItem(${item.id})">Edit</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
     getItemStatus(item) {
         const totalTarget = item.targetAmount + (item.extra || 0);
         
-        if (item.currentCount === 0 && totalTarget === 0) {
+        if (item.targetAmount === 0) {
             return { class: 'unlicensed', text: 'Unlicensed' };
         } else if (item.currentCount === 0) {
             return { class: 'out', text: 'Out of Stock' };
@@ -477,6 +550,10 @@ class InventoryManager {
                 this.resetAddForm();
                 this.loadLocations();
                 this.loadInventory();
+                // Also refresh unlicensed view in case new item is unlicensed
+                if (formData.targetAmount === 0) {
+                    this.loadUnlicensedItems();
+                }
             } else {
                 const error = await response.json();
                 this.showError(error.error || 'Failed to add item');
@@ -512,7 +589,20 @@ class InventoryManager {
             if (response.ok) {
                 this.closeEditModal();
                 this.loadLocations();
-                this.loadInventory();
+                
+                // Refresh appropriate views based on current view and item changes
+                if (this.currentView === 'unlicensed') {
+                    // If editing from unlicensed view, refresh both unlicensed and inventory
+                    // in case item moved from unlicensed to licensed
+                    this.loadUnlicensedItems();
+                    this.loadInventory();
+                } else if (this.currentView === 'inventory') {
+                    this.loadInventory();
+                    // Also refresh unlicensed in case item became unlicensed
+                    this.loadUnlicensedItems();
+                } else if (this.currentView === 'inactive') {
+                    this.loadInactiveItems();
+                }
             } else {
                 const error = await response.json();
                 this.showError(error.error || 'Failed to update item');
@@ -622,21 +712,53 @@ class InventoryManager {
 
     async updateCount(id, newCount) {
         try {
-            // Get current item to preserve targetAmount
+            // Get current item to preserve targetAmount and handle extra logic
             const response = await fetch(`/api/inventory?store_id=${this.currentStoreId}`);
             const inventory = await response.json();
             const item = inventory.find(i => i.id === id);
             
             if (!item) return;
             
-            const updateResponse = await fetch(`/api/inventory/${id}/quantity`, {
-                method: 'PATCH',
+            const currentCount = item.currentCount;
+            const currentExtra = item.extra || 0;
+            const newCountInt = parseInt(newCount) || 0;
+            
+            let finalCount = newCountInt;
+            let finalExtra = currentExtra;
+            
+            // Only reduce extra when count is being reduced (items sold/consumed)
+            // When count increases (restocking), don't touch extra field
+            if (newCountInt < currentCount) {
+                const reduction = currentCount - newCountInt;
+                
+                if (reduction <= currentExtra) {
+                    // Reduction can be fully absorbed by extra
+                    finalCount = currentCount;
+                    finalExtra = currentExtra - reduction;
+                } else {
+                    // Reduce extra to 0 and reduce count for the remainder
+                    finalExtra = 0;
+                    finalCount = currentCount - reduction;
+                }
+            } else {
+                // Count is increasing or staying same, don't touch extra
+                finalCount = newCountInt;
+                finalExtra = currentExtra;
+            }
+            
+            // Update both count and extra
+            const updateResponse = await fetch(`/api/inventory/${id}`, {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    currentCount: parseInt(newCount),
-                    targetAmount: item.targetAmount
+                    brand: item.brand,
+                    item: item.item,
+                    location: item.location,
+                    currentCount: finalCount,
+                    targetAmount: item.targetAmount,
+                    extra: finalExtra
                 })
             });
 
@@ -694,21 +816,28 @@ class InventoryManager {
             
             if (!item) return;
             
+            // Simply add the purchased amount to current count
+            // Reset extra to 0 since the planning has been executed
             const newCount = item.currentCount + amount;
             
-            const updateResponse = await fetch(`/api/inventory/${id}/quantity`, {
-                method: 'PATCH',
+            const updateResponse = await fetch(`/api/inventory/${id}`, {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
+                    brand: item.brand,
+                    item: item.item,
+                    location: item.location,
                     currentCount: newCount,
-                    targetAmount: item.targetAmount
+                    targetAmount: item.targetAmount,
+                    extra: 0  // Reset extra to 0 after purchase - planning executed
                 })
             });
 
             if (updateResponse.ok) {
                 this.loadShoppingList(); // Refresh shopping list
+                this.loadInventory(); // Refresh inventory
             } else {
                 const error = await updateResponse.json();
                 this.showError(error.error || 'Failed to add purchase');

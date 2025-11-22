@@ -16,6 +16,7 @@
             </div>
             <nav>
                 <button id="inventoryTab" class="nav-btn active">All Inventory</button>
+                <button id="unlicensedTab" class="nav-btn">Unlicensed Items</button>
                 <button id="inactiveTab" class="nav-btn">Inactive Items</button>
                 <button id="shoppingTab" class="nav-btn">Shopping List</button>
                 <button id="addItemTab" class="nav-btn">Add Item</button>
@@ -101,6 +102,22 @@
                     </thead>
                 </table>
             </div>
+            <div id="unlicensedControls" class="view-controls" style="display: none;">
+                <label for="searchUnlicensed">Search:</label>
+                <input type="text" id="searchUnlicensed" placeholder="Search brand or item..." style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; min-width: 200px;">
+                <button id="refreshUnlicensed" class="btn-primary">Refresh</button>
+            </div>
+            <div id="unlicensedTableHeader" class="fixed-table-header" style="display: none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Brand</th>
+                            <th>Item</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
         </header>
 
         <main>
@@ -126,6 +143,15 @@
             <div id="inactiveView" class="view">
                 <div class="table-container">
                     <table id="inactiveTable">
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Unlicensed Items View -->
+            <div id="unlicensedView" class="view">
+                <div class="table-container">
+                    <table id="unlicensedTable">
                         <tbody></tbody>
                     </table>
                 </div>
